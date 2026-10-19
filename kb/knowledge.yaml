@@ -1,0 +1,1511 @@
+# Knowledge Base BRONE v4.0 (sumber utama, satu-satunya file yang diedit manual)
+# ---------------------------------------------------------------------------
+# File turunan dibuat oleh build_kb.py:
+#   - chunks.jsonl  : chunk kecil + breadcrumb + metadata sumber (untuk RAG versi baru)
+#   - knowledge.txt : format lama (BAGIAN N / [ Fxx ] / FAQ di BAGIAN 19), cocok untuk RagLite2/3
+#
+# Aturan penulisan:
+#   1. Setiap fakta wajib punya `sumber` (id di daftar `sumber:` paling bawah).
+#   2. Fakta yang tidak bisa diverifikasi TIDAK dimasukkan. Jangan ada catatan
+#      "koreksi"/nilai lama yang salah di dalam teks, karena model bisa ikut mengucapkannya.
+#   3. Data yang cepat basi (jadwal, biaya, peringkat) wajib memakai `berlaku_hingga`
+#      atau menyebut tahun di teksnya.
+#   4. Teks ditulis dalam kalimat lengkap yang bisa langsung diucapkan robot.
+
+meta:
+  nama: Knowledge Base BRONE
+  versi: "4.1"
+  diperbarui: "2026-10-06"
+  catatan_keputusan:
+    - Robot memperkenalkan diri sebagai Bron. Nama anggota tim robot tidak dicantumkan.
+    - Lantai laboratorium FILKOM tidak dicantumkan karena sumbernya tidak konsisten.
+    - Jam buka perpustakaan tidak dicantumkan; robot mengarahkan ke lib.ub.ac.id.
+    - Jumlah fakultas ditulis 17 fakultas ditambah Sekolah Pascasarjana (Peraturan Rektor 44/2026).
+    - Sejarah fakultas yang belum terverifikasi (FK, FISIP, FIB, FKG, FIKES, FV, FSTeM, FTAB) belum dimasukkan.
+
+# ===========================================================================
+# BAGIAN UMUM (urutan = nomor BAGIAN di knowledge.txt; BAGIAN 19 khusus FAQ)
+# ===========================================================================
+bagian:
+  - nomor: 1
+    judul: PROFIL UMUM UNIVERSITAS BRAWIJAYA
+    fakta:
+      - sub: Identitas
+        teks: >-
+          Universitas Brawijaya, disingkat UB, adalah perguruan tinggi negeri di Kota Malang, Jawa Timur.
+          Kampus utamanya berada di Jalan Veteran, Malang 65145. Moto UB adalah "Building Up Noble Future",
+          yang berarti membangun kemuliaan masa depan.
+        sumber: [ub_profil, ub_brand, ub_stat]
+      - sub: Status kelembagaan
+        teks: >-
+          UB berstatus Perguruan Tinggi Negeri Badan Hukum atau PTNBH berdasarkan Peraturan Pemerintah Nomor 108
+          Tahun 2021 tanggal 18 Oktober 2021. Sebelumnya UB berstatus PTN Badan Layanan Umum sejak 17 Desember 2008.
+          Sebagai PTNBH, UB memiliki Majelis Wali Amanat, Rektor, Senat Akademik Universitas, dan Komite Audit.
+        sumber: [prasetya_ptnbh, ub_visi]
+      - sub: Akreditasi institusi
+        teks: >-
+          UB terakreditasi Unggul dari BAN-PT berdasarkan SK Nomor 957/SK/BAN-PT/Ak.Ppj/PT/XI/2023 tanggal 21 November 2023.
+        sumber: [ub_akreditasi]
+      - sub: UB dalam angka
+        teks: >-
+          Menurut data resmi UB per Juni 2025, UB memiliki 197 program studi, 271 guru besar, 1.076 dosen bergelar doktor,
+          17.485 mahasiswa baru, dan 11.431 lulusan. Secara keseluruhan UB memiliki lebih dari 60.000 mahasiswa.
+          UB pernah enam kali menjadi juara umum PIMNAS.
+        sumber: [ub_stat, ub_profil]
+      - sub: Jumlah fakultas
+        teks: >-
+          UB memiliki 17 fakultas ditambah Sekolah Pascasarjana. Data statistik resmi UB menghitungnya sebagai 18 fakultas
+          karena Sekolah Pascasarjana ikut dihitung.
+        sumber: [detik_rename, ub_stat]
+      - sub: Lokasi kampus
+        teks: >-
+          Kampus utama UB berada di Jalan Veteran, Kota Malang, dengan luas sekitar 51,6 hektare dan ketinggian sekitar 492 meter
+          di atas permukaan laut. UB juga memiliki Kampus Dieng di Jalan Puncak Dieng, Kalisongo, Kecamatan Dau, Kabupaten Malang,
+          yang menjadi lokasi Fakultas Kedokteran Hewan dan Fakultas Ilmu Kesehatan. Ada pula PSDKU di Kediri dan
+          program pascasarjana di Jakarta. Kampus baru UB sedang dibangun di Desa Panggungrejo, Kepanjen, Kabupaten Malang,
+          di atas lahan sekitar 30 hektare. Gedung Fakultas Vokasi sedang dibangun di kampus Kepanjen tersebut.
+        sumber: [ub_stat, fkh_kontak, fikes_home, selma_ukt, aset_kepanjen]
+      - sub: Luas aset
+        teks: >-
+          Total aset lahan UB sekitar 981 hektare. Hanya sekitar 20 persen yang dipakai langsung untuk perkuliahan;
+          sisanya berupa lahan penelitian, hutan pendidikan UB Forest, laboratorium riset, dan teaching factory.
+        sumber: [web_aset981]
+      - sub: Kontak resmi UB
+        teks: >-
+          Telepon UB 0341-551611. Website utama www.ub.ac.id. Informasi pendaftaran mahasiswa baru ada di selma.ub.ac.id,
+          dan layanan akademik di akademik.ub.ac.id. Berita resmi UB ada di prasetya.ub.ac.id.
+        sumber: [ub_pejabat, ub_admisi]
+
+  - nomor: 2
+    judul: SEJARAH UNIVERSITAS BRAWIJAYA
+    fakta:
+      - sub: Awal berdiri
+        teks: >-
+          Cikal bakal UB adalah Perguruan Tinggi Hukum dan Pengetahuan Masyarakat atau PTHPM yang dibuka pada 1 Juli 1957
+          oleh Yayasan Perguruan Tinggi Malang. Pada 1 Juli 1960 namanya menjadi Universitas Kotapraja Malang.
+        sumber: [ub_sejarah, fh_sejarah]
+      - sub: Asal nama Brawijaya
+        teks: >-
+          Nama Universitas Brawijaya diberikan oleh Presiden Soekarno melalui kawat Nomor 258/K/1961 tanggal 11 Juli 1961.
+          Nama Brawijaya diambil dari gelar raja-raja Kerajaan Majapahit.
+        sumber: [ub_sejarah, ub_profil, feb_sejarah]
+      - sub: Penegerian dan Dies Natalis
+        teks: >-
+          UB resmi menjadi universitas negeri pada 5 Januari 1963 berdasarkan SK Menteri PTIP Nomor 1 Tahun 1963,
+          yang dikukuhkan Keputusan Presiden Nomor 196 Tahun 1963 tanggal 23 September 1963.
+          Tanggal 5 Januari diperingati sebagai Dies Natalis UB. Pada 5 Januari 2026 UB berusia 63 tahun,
+          dan Dies Natalis ke-64 jatuh pada 5 Januari 2027.
+        sumber: [ub_sejarah, kalender_akademik, malangtimes_dies63]
+      - sub: Fakultas awal
+        teks: >-
+          Pada 1961 UB memiliki empat fakultas, yaitu Fakultas Hukum dan Pengetahuan Masyarakat, Fakultas Ekonomi,
+          Fakultas Administrasi Niaga, dan Fakultas Pertanian. Fakultas Kedokteran Hewan dan Peternakan didirikan pada 26 Oktober 1961.
+        sumber: [ub_sejarah]
+
+  - nomor: 3
+    judul: VISI DAN MISI UNIVERSITAS BRAWIJAYA
+    fakta:
+      - sub: Visi
+        teks: >-
+          Visi UB adalah menjadi perguruan tinggi pelopor dan pembaharu dengan reputasi internasional dalam ilmu pengetahuan
+          dan teknologi, terutama yang menunjang industri berbasis budaya untuk kesejahteraan masyarakat.
+        sumber: [ub_visi]
+      - sub: Misi
+        teks: >-
+          Misi UB ada empat: menyelenggarakan pendidikan berstandar internasional; menyelenggarakan penelitian yang bermanfaat
+          bagi masyarakat; menyelenggarakan pengabdian kepada masyarakat sebagai agen pembaruan dan pembangunan ekonomi bangsa
+          berdasarkan kearifan lokal; serta mengelola perguruan tinggi yang unggul, berkeadilan, dan berkelanjutan.
+          Visi dan misi ini tercantum dalam Renstra UB 2022 sampai 2027.
+        sumber: [ub_visi]
+
+  - nomor: 4
+    judul: PIMPINAN UNIVERSITAS BRAWIJAYA
+    fakta:
+      - sub: Rektor
+        teks: >-
+          Rektor UB periode 2022 sampai 2027 adalah Profesor Widodo, S.Si., M.Si., Ph.D.Med.Sc. Beliau sebelumnya adalah
+          Dekan Fakultas MIPA UB. Kantor rektor berada di Gedung Rektorat UB lantai 7.
+        sumber: [ub_pejabat, mwa_rektor]
+      - sub: Wakil Rektor
+        teks: >-
+          Wakil Rektor Bidang Akademik adalah Profesor Doktor Insinyur Imam Santoso, M.P.
+          Wakil Rektor Bidang Keuangan dan Sumber Daya adalah Profesor Doktor Muchamad Ali Safaat, S.H., M.H.
+          Wakil Rektor Bidang Kemahasiswaan, Alumni, dan Kewirausahaan Mahasiswa adalah Doktor Setiawan Noerdajasakti, S.H., M.H.
+          Wakil Rektor Bidang Perencanaan, Kerja Sama, dan Internasionalisasi adalah Profesor Andi Kurniawan, S.Pi., M.Eng., D.Sc.
+          Wakil Rektor Bidang Riset dan Inovasi adalah Profesor Doktor Unti Ludigdo, S.E., M.Si., Ak.
+        sumber: [ub_pejabat]
+      - sub: Sekretaris Universitas
+        teks: >-
+          Sekretaris Universitas Brawijaya adalah Doktor Tri Wahyu Nugroho, S.P., M.Si.
+        sumber: [ub_pejabat]
+
+  - nomor: 5
+    judul: PERINGKAT DAN AKREDITASI INTERNASIONAL
+    fakta:
+      - sub: QS World University Rankings 2027
+        teks: >-
+          Pada QS World University Rankings 2027 yang terbit Juni 2026, UB berada di peringkat 616 dunia, naik 64 peringkat
+          dari posisi 680 pada edisi 2026. UB berada di sekitar peringkat delapan nasional, dan kenaikannya tertinggi di antara PTNBH.
+        sumber: [prasetya_qs2027, topuni]
+      - sub: Peringkat lain
+        teks: >-
+          Pada QS Asia University Rankings 2026 UB berada di peringkat 145 Asia, naik dari peringkat 172 pada edisi 2025.
+          Pada QS Sustainability Rankings UB berada di peringkat 623 dunia. Pada THE Asia University Rankings 2026 UB berada
+          di kelompok 601 sampai 800.
+        sumber: [topuni, prasetya_theasia]
+      - sub: Akreditasi internasional program studi
+        teks: >-
+          Beberapa program studi UB terakreditasi internasional. ACCA untuk Akuntansi FEB, ABEST21 untuk magister Akuntansi,
+          Ilmu Ekonomi, dan Manajemen FEB, IACBE dan AASBI untuk Administrasi Bisnis FIA, IABEE untuk Teknik Elektro FT,
+          dan IFT untuk Ilmu dan Teknologi Pangan. UB menjadi anggota AUN-QA sejak 2014 dan memegang sertifikasi ISO 9001 sejak 2011.
+        sumber: [ub_akreditasi]
+
+  - nomor: 6
+    judul: JALUR PENERIMAAN MAHASISWA BARU
+    fakta:
+      - sub: Jalur program sarjana
+        teks: >-
+          Jalur masuk program sarjana UB ada tiga: SNBP yang berbasis prestasi tanpa ujian tulis, SNBT yang berbasis tes UTBK,
+          dan Seleksi Mandiri UB. Informasi SNBP dan SNBT ada di snpmb.bppp.kemdikbud.go.id, sedangkan seleksi mandiri di selma.ub.ac.id.
+        sumber: [ub_admisi]
+      - sub: Seleksi Mandiri 2026
+        teks: >-
+          Pada 2026 Seleksi Mandiri UB memiliki empat jalur: Jalur Prestasi, Jalur Nilai Rapor, Jalur Nilai UTBK,
+          dan Seleksi Mandiri Penyandang Disabilitas. Pendaftaran dilakukan melalui admisi.ub.ac.id.
+          Jadwal penerimaan mahasiswa baru 2027 belum diumumkan.
+        sumber: [detik_ukt2026]
+        berlaku_hingga: "2027-06-30"
+      - sub: Program diploma, disabilitas, dan pascasarjana
+        teks: >-
+          Program diploma dan sarjana terapan di Fakultas Vokasi diterima melalui Seleksi Masuk Program Vokasi. UB juga membuka jalur
+          khusus penyandang disabilitas bersama Pusat Studi dan Layanan Disabilitas UB. Seleksi program magister dan doktor
+          dibuka dua kali setahun, untuk semester ganjil dan genap, melalui selma.ub.ac.id.
+        sumber: [ub_admisi]
+      - sub: Kontak layanan akademik
+        teks: >-
+          Direktorat Administrasi dan Layanan Akademik atau DALA UB berada di Gedung Rektorat lantai 2. Teleponnya 0341-551611
+          ekstensi 117 dan 118, atau langsung 0341-575754. Emailnya akademik.center@ub.ac.id.
+        sumber: [ub_admisi]
+
+  - nomor: 7
+    judul: BIAYA KULIAH UKT DAN IPI
+    fakta:
+      - sub: Aturan biaya mahasiswa baru 2026
+        teks: >-
+          Biaya mahasiswa baru UB tahun 2026 diatur oleh Peraturan Rektor UB Nomor 118 Tahun 2025 untuk Uang Kuliah Tunggal
+          atau UKT, dan Peraturan Rektor Nomor 123 Tahun 2025 untuk Iuran Pengembangan Institusi atau IPI.
+          UKT dibayar setiap semester. IPI hanya berlaku untuk jalur mandiri dan dibayar sekali di awal kuliah.
+        sumber: [selma_ukt, selma_ipi, detik_ukt2026]
+        berlaku_hingga: "2027-06-30"
+      - sub: UKT jalur SNBP dan SNBT
+        teks: >-
+          Untuk jalur SNBP dan SNBT, UKT kelompok 1 sebesar 500 ribu rupiah dan kelompok 2 sebesar 1 juta rupiah per semester
+          untuk semua program studi. Kelompok yang lebih tinggi besarnya berbeda tiap program studi. Kelompok UKT ditentukan
+          dari data kemampuan ekonomi orang tua, bukan dipilih sendiri.
+        sumber: [kompas_ukt2026]
+      - sub: Contoh biaya jalur mandiri
+        teks: >-
+          Pada jalur mandiri 2026, UKT tertinggi ada di Kedokteran, yaitu 19,16 juta sampai 24 juta rupiah per semester,
+          dengan IPI 150 juta sampai 225 juta rupiah. Kedokteran Gigi memiliki IPI 100 juta sampai 150 juta rupiah.
+          Rincian per program studi ada di bagian tiap fakultas dan di selma.ub.ac.id.
+        sumber: [detik_ukt2026, selma_ipi]
+        berlaku_hingga: "2027-06-30"
+
+  - nomor: 8
+    judul: KALENDER AKADEMIK SEMESTER DAN WISUDA
+    fakta:
+      - sub: Semester ganjil 2026/2027
+        teks: >-
+          Perkuliahan semester ganjil tahun akademik 2026/2027, termasuk UTS dan UAS, berlangsung 18 Agustus sampai 18 Desember 2026.
+          Batas akhir pengumuman nilai adalah 2 Januari 2027, dan semester ganjil berakhir 8 Januari 2027.
+        sumber: [kalender_akademik]
+        berlaku_hingga: "2027-01-08"
+      - sub: Semester genap 2026/2027
+        teks: >-
+          Registrasi semester genap dilakukan 18 sampai 29 Januari 2027, pengisian KRS 20 sampai 30 Januari 2027,
+          dan perkuliahan semester genap berlangsung 8 Februari sampai 18 Juni 2027. Semester Antara berlangsung
+          21 Juni sampai 16 Juli 2027, dan semester genap berakhir 30 Juli 2027.
+        sumber: [kalender_akademik]
+        berlaku_hingga: "2027-07-30"
+      - sub: Dies Natalis 2027
+        teks: >-
+          Upacara Dies Natalis UB ke-64 dengan pidato ilmiah dijadwalkan pada 5 Januari 2027.
+        sumber: [kalender_akademik]
+        berlaku_hingga: "2027-01-05"
+      - sub: Wisuda 2026/2027
+        teks: >-
+          Wisuda UB tahun akademik 2026/2027 digelar di Gedung Samantha Krida. Periode I dan II berlangsung 12 dan 13 September 2026,
+          periode III dan IV pada 19 dan 20 September 2026, serta periode V dan VI pada Sabtu 10 Oktober dan Minggu 11 Oktober 2026,
+          pukul 07.30 sampai 11.30. Pendaftaran wisuda dilakukan melalui bagian akademik fakultas masing-masing.
+          Jadwal periode berikutnya belum diumumkan.
+        sumber: [ub_wisuda56]
+        berlaku_hingga: "2026-10-11"
+      - sub: Ketentuan wisuda
+        teks: >-
+          Setiap wisudawan boleh membawa paling banyak dua pendamping. Undangan elektronik berbentuk QR code diunduh dari SIAM,
+          dan pendamping masuk Gedung Samantha Krida melalui Pintu A atau Pintu D. Toga bisa dipesan melalui KPRI UB,
+          dengan warna kerah sesuai identitas fakultas.
+        sumber: [ub_wisuda56]
+
+  - nomor: 10
+    judul: FASILITAS KAMPUS UB
+    fakta:
+      - sub: Fasilitas umum
+        teks: >-
+          Fasilitas umum UB antara lain kantor cabang Bank BCA, Mandiri, BNI, BRI, dan BTN, ATM, Guest House UB,
+          penginapan Griya Brawijaya, Kantor Pos, Toserba KPRI UB, Daycare Center UB, dan Masjid Raden Patah.
+        sumber: [ub_fasum]
+      - sub: Gedung dan olahraga
+        teks: >-
+          UB memiliki Gedung Samantha Krida dan Widyaloka sebagai gedung pertemuan besar, serta Pertamina Sport Arena,
+          Sport Clubhouse, dan lapangan sepak bola di Kampus Dieng. UB Sport Center menyediakan fitnes, aerobik,
+          tenis lapangan, bulu tangkis, tenis meja, dan futsal.
+        sumber: [ub_profil, filkom_fasilitas]
+      - sub: Fasilitas kesehatan
+        teks: >-
+          Fasilitas kesehatan UB terdiri atas Poliklinik UB, Rumah Sakit Universitas Brawijaya atau RSUB, Rumah Sakit Gigi
+          dan Mulut UB, dan Rumah Sakit Hewan Pendidikan UB. RSUB terakreditasi KARS Bintang Lima atau Paripurna.
+          Klinik UB melayani poli umum, poli gigi, poli gizi, dan poli kesehatan ibu dan anak.
+        sumber: [ub_kesehatan, ub_prestasi, filkom_fasilitas]
+      - sub: Perpustakaan
+        teks: >-
+          Perpustakaan pusat UB terakreditasi A dari Perpustakaan Nasional dan menjadi anggota IATUL sejak 2016.
+          Mahasiswa dapat meminjam hingga 25 buku koleksi umum selama 14 hari. Informasi layanan dan jam buka ada di lib.ub.ac.id.
+        sumber: [ub_akreditasi, ub_lib]
+      - sub: Layanan disabilitas
+        teks: >-
+          Pusat Studi dan Layanan Disabilitas UB atau PSLD didirikan pada 19 Maret 2012 untuk penelitian isu disabilitas
+          dan layanan bagi mahasiswa penyandang disabilitas.
+        sumber: [filkom_fasilitas]
+
+  - nomor: 11
+    judul: PRESTASI DAN DANA ABADI
+    fakta:
+      - sub: PIMNAS
+        teks: >-
+          UB enam kali menjadi juara umum PIMNAS, termasuk tiga kali berturut-turut pada 2015, 2016, dan 2017.
+        sumber: [ub_stat, ub_prestasi]
+      - sub: Dana Abadi UB
+        teks: >-
+          Dana Abadi UB terkumpul sekitar 76 miliar rupiah pada 2025. Beasiswa Dana Abadi pertama disalurkan pada 12 Agustus 2025
+          kepada 50 mahasiswa dari keluarga kurang mampu, berupa subsidi UKT 3,5 juta rupiah per semester hingga semester delapan.
+        sumber: [prasetya_danaabadi]
+
+  - nomor: 12
+    judul: BEASISWA
+    fakta:
+      - sub: Beasiswa mahasiswa
+        teks: >-
+          UB menyediakan beasiswa dari pemerintah, perusahaan, dan dana abadi UB, untuk mahasiswa berprestasi maupun yang kurang mampu.
+          Informasi lengkap ada di beasiswa.ub.ac.id.
+        sumber: [ub_beasiswa, prasetya_danaabadi]
+      - sub: BISS
+        teks: >-
+          Brawijaya International Student Scholarship atau BISS adalah beasiswa penuh untuk mahasiswa asing. Pada 2025 BISS menerima
+          sekitar 2.349 pendaftar, naik jauh dari sekitar 400 pendaftar pada 2024.
+        sumber: [kanal24_biss]
+
+  - nomor: 13
+    judul: UNIT KEGIATAN MAHASISWA
+    fakta:
+      - sub: UKM penalaran dan kesenian
+        teks: >-
+          UKM bidang penalaran di UB antara lain Formasi, Fordi Mapelar, UAPKM atau pers mahasiswa, IAAS, AIESEC, R-KIM, dan Mahasiswa Wirausaha.
+          UKM kesenian antara lain Unit Aktivitas Band, Paduan Suara Mahasiswa, UNITANTRI untuk karawitan dan tari, Teater Kutub,
+          Marching Band, Sinematografi Nol Derajat, dan Seni Religi.
+        sumber: [ub_ukm]
+      - sub: UKM olahraga
+        teks: >-
+          UKM olahraga UB antara lain bulu tangkis, bola basket, bola voli, sepak bola, tenis lapangan, tenis meja, renang, softball dan baseball,
+          boomerang, panahan, bridge, Basic Shooting Club, Brawijaya Chess Club, Perisai Diri, PSHT, Tapak Suci, Merpati Putih,
+          Shorinji Kempo, Taekwondo, dan INKAI.
+        sumber: [ub_ukm]
+      - sub: UKM minat khusus dan kerohanian
+        teks: >-
+          UKM minat khusus antara lain Resimen Mahasiswa, KSR, Impala atau pecinta alam, Pramuka, dan Tegasz. UKM kerohanian terdiri atas
+          UAKI untuk Islam, UAKK untuk Kristen, UAKKat untuk Katolik, UAKB untuk Buddha, dan UNIKAHIDA untuk Hindu.
+        sumber: [ub_ukm]
+
+  - nomor: 14
+    judul: TENTANG BRONE ROBOT MASKOT UB
+    fakta:
+      - sub: Maskot BRONE
+        teks: >-
+          BRONE adalah maskot resmi Universitas Brawijaya. BRONE merupakan singkatan dari Brawijaya Number One.
+          Konsepnya adalah robot pendamping yang menjadi pemandu informasi, mampu belajar, dan terus berkembang.
+          Bentuk robot melambangkan inovasi serta kekuatan daya saing. Warna biru, kuning, silver, dan hitam melambangkan
+          kepercayaan, kebahagiaan, modernisasi, dan elegan.
+        sumber: [ub_brand]
+      - sub: Robot Bron
+        teks: >-
+          Saya adalah Bron, robot humanoid yang mewujudkan maskot BRONE Universitas Brawijaya. Saya dikembangkan melalui program
+          UB Globalizing Project Robot BRONE oleh dosen, mahasiswa, dan alumni dari Fakultas Ilmu Komputer, Teknik Elektro,
+          dan Teknik Mesin UB.
+        sumber: [filkom_pitoyo2026, filkom_workshop2024]
+      - sub: Kemampuan Bron
+        teks: >-
+          Bron bisa mendengar pertanyaan dan menjawab informasi seputar Universitas Brawijaya dengan suara dalam bahasa Indonesia,
+          menampilkan ekspresi wajah, dan menatap atau mengikuti wajah lawan bicara. Bron belum bisa melakukan gerakan fisik seperti
+          melambai, duduk, berdiri, atau berjalan mengikuti orang.
+        sumber: [tim_brone]
+      - sub: Prestasi dan kerja sama
+        teks: >-
+          Tim BRONE dari FILKOM UB meraih Juara 3 Best Performance Team pada National Industrial Robotic Competition atau NIRC 2025
+          di Universitas Negeri Padang, 17 sampai 21 Februari 2025, bersaing dengan 34 tim dari 20 perguruan tinggi.
+          Pada 30 Agustus 2024 UB dan Chukyo University dari Jepang mengadakan workshop pengembangan teknologi robot untuk tim robot BRONE
+          di Gedung F FILKOM, dengan narasumber Profesor Pitoyo Hartono.
+        sumber: [filkom_nirc2025, filkom_workshop2024]
+      - sub: BRONE sebagai LMS
+        teks: >-
+          Selain nama maskot dan robot, BRONE juga nama LMS atau Learning Management System, yaitu platform pembelajaran daring di brone.ub.ac.id
+          yang dipakai FILKOM dan Fakultas Kedokteran untuk perkuliahan.
+        sumber: [filkom_fasilitas]
+
+  - nomor: 15
+    judul: KONTAK PENTING DAN LAYANAN
+    fakta:
+      - sub: Kontak layanan
+        teks: >-
+          Telepon umum UB 0341-551611. Layanan akademik DALA di Gedung Rektorat lantai 2, telepon 0341-575754.
+          Pendaftaran mahasiswa baru di selma.ub.ac.id. Beasiswa di beasiswa.ub.ac.id. Rumah Sakit UB di rumahsakit.ub.ac.id.
+        sumber: [ub_pejabat, ub_admisi, ub_beasiswa, filkom_fasilitas]
+
+  - nomor: 16
+    judul: DETAIL FILKOM GEDUNG LAYANAN DAN LABORATORIUM
+    fakta:
+      - sub: Gedung dan ruang FILKOM
+        teks: >-
+          FILKOM memiliki beberapa gedung, antara lain Gedung A, Gedung F, dan Gedung G. Gedung F adalah gedung tertinggi di UB.
+          Smart Class ada di lantai 2, 3, dan 4 Gedung F. Helpdesk dan operator akademik ada di lantai 1 Gedung F.
+          Auditorium Algoritma ada di lantai 2 Gedung G, dan Mini Teater Heuristik ada di lantai 2 Gedung A.
+          Ruang Baca ada di koridor lantai 2 antara Gedung F dan Gedung G.
+        sumber: [filkom_fasilitas]
+      - sub: Fasilitas mahasiswa FILKOM
+        teks: >-
+          Gedung Kreativitas Mahasiswa FILKOM memiliki lima lantai. Lantai 1 untuk co-working space, lantai 2 dan 3 untuk ruang himpunan
+          mahasiswa, lantai 4 untuk aula, dan lantai 5 berupa helipad untuk riset drone. Mushola Ulul Al-Baab berada di sebelah
+          Gedung Kreativitas Mahasiswa. Unit Konseling ada di Gedung A. Ada juga Game Corner, gazebo, dan ruang laktasi.
+          Griya Brawijaya, tempat menginap bagi tamu dan orang tua mahasiswa, berada di seberang Gedung G.
+        sumber: [filkom_fasilitas]
+      - sub: Laboratorium FILKOM
+        teks: >-
+          FILKOM memiliki delapan laboratorium: Laboratorium Sistem Cerdas, Rekayasa Perangkat Lunak, Robotika dan Embedded System,
+          Jaringan Berbasis Informasi, Media Game dan Mobile, Sistem Informasi, Teknologi Pembelajaran, dan Laboratorium Pembelajaran.
+        sumber: [filkom_labs]
+      - sub: Aplikasi layanan FILKOM
+        teks: >-
+          FILKOM Apps dipakai untuk mengelola skripsi, mulai dari proposal, logbook, seminar hasil, hingga ujian.
+          Pertanyaan administratif bisa diajukan lewat HaloFILKOM di halofilkom.ub.ac.id. Perkuliahan daring memakai LMS BRONE.
+          Instagram resmi FILKOM adalah @filkomub.
+        sumber: [filkom_fasilitas]
+      - sub: Aksesibilitas FILKOM
+        teks: >-
+          Gedung-gedung FILKOM dilengkapi ramp, lift yang ramah tunanetra, toilet khusus disabilitas di setiap gedung,
+          dan parkir khusus penyandang disabilitas di basemen Gedung F dan G.
+        sumber: [filkom_fasilitas]
+      - sub: Acara FILKOM terdekat
+        teks: >-
+          Sosialisasi Akademik Orang Tua Mahasiswa Baru FILKOM angkatan 2026 diadakan pada 31 Oktober 2026 pukul 08.00
+          di Auditorium Algoritma Gedung G lantai 2.
+        sumber: [filkom_home]
+        berlaku_hingga: "2026-10-31"
+
+# ===========================================================================
+# FAKULTAS (dirender sebagai [ Fxx ] di dalam BAGIAN 9 pada knowledge.txt)
+# biaya_prodi: nama prodi PERSIS seperti di data/ukt_mandiri_2026.csv dan data/ipi_2026.csv
+# ===========================================================================
+fakultas:
+  - kode: F01
+    singkatan: FH
+    nama: Fakultas Hukum
+    situs: hukum.ub.ac.id
+    alamat: Jalan MT. Haryono Nomor 169, Malang
+    telepon: "(0341) 553898"
+    email: hukum@ub.ac.id
+    dekan: Profesor Doktor Aan Eko Widiarto, S.H., M.Hum., menjabat sejak 2023
+    wakil_dekan:
+      - Wakil Dekan Bidang Akademik Milda Istiqomah, S.H., MTCP, Ph.D.
+      - Wakil Dekan Bidang Umum, Keuangan, dan Sumber Daya Profesor Doktor Nurini Aprilianda, S.H., M.Hum.
+      - Wakil Dekan Bidang Kemahasiswaan Doktor Muktiono, S.H., M.Phil.
+    prodi: >-
+      Sarjana Ilmu Hukum; Magister Ilmu Hukum dan Magister Kenotariatan, keduanya juga ada di Jakarta;
+      serta Doktor Ilmu Hukum, juga ada di Jakarta.
+    sejarah: >-
+      Fakultas Hukum adalah fakultas tertua di UB. Cikal bakalnya Perguruan Tinggi Hukum dan Pengetahuan Masyarakat yang didirikan
+      1 Juli 1957. Namanya menjadi Fakultas Hukum berdasarkan PP Nomor 27 Tahun 1981 dan Keputusan Presiden Nomor 59 Tahun 1982.
+    biaya_prodi: [Ilmu Hukum]
+    sumber: [fh_home, fh_pimpinan, fh_sejarah]
+
+  - kode: F02
+    singkatan: FEB
+    nama: Fakultas Ekonomi dan Bisnis
+    situs: feb.ub.ac.id
+    dekan: Abdul Ghofar, S.E., M.Si., MAcc., DBA., Ak., CA., periode 2025 sampai 2030; sebelumnya juga dekan periode 2021 sampai 2025
+    wakil_dekan:
+      - Wakil Dekan Bidang Akademik Profesor Ananda Sabil Hussein, S.E., M.Com., Ph.D.
+      - Wakil Dekan Bidang Umum, Keuangan, dan Sumber Daya Doktor Hendi Subandi, S.E., M.A.
+      - Wakil Dekan Bidang Kemahasiswaan Doktor Nurul Badriyah, S.E., M.E.
+    prodi: >-
+      Sarjana Ekonomi Islam, Ekonomi Pembangunan, Ekonomi Keuangan dan Perbankan, Akuntansi, Manajemen, dan Kewirausahaan;
+      Profesi Akuntansi; Magister Ilmu Ekonomi, Manajemen, dan Akuntansi; Doktor Ilmu Ekonomi, Ilmu Manajemen, dan Ilmu Akuntansi.
+    sejarah: >-
+      Cikal bakal FEB adalah Perguruan Tinggi Ekonomi Malang yang didirikan pada 27 Juni 1957, dengan akta notaris tanggal 15 Agustus 1957.
+      PTEM bergabung dengan UB pada 3 Oktober 1961 menjadi Fakultas Ekonomi, lalu berganti nama menjadi Fakultas Ekonomi dan Bisnis pada 2011.
+      Program studi Akuntansi FEB terakreditasi ACCA.
+    biaya_prodi: [Ekonomi Islam, Ekonomi Pembangunan, "Ekonomi, Keuangan dan Perbankan", Akuntansi, Manajemen, Kewirausahaan]
+    sumber: [feb_pimpinan, feb_sejarah, selma_ukt, ub_akreditasi]
+
+  - kode: F03
+    singkatan: FIA
+    nama: Fakultas Ilmu Administrasi
+    situs: fia.ub.ac.id
+    telepon: "(0341) 553737"
+    dekan: Profesor Doktor Hamidah Nayati Utami, S.Sos., M.Si., periode 2025 sampai 2030
+    wakil_dekan:
+      - Wakil Dekan Bidang Akademik Doktor Fadillah Amin, M.AP., Ph.D.
+      - Wakil Dekan Bidang Umum, Keuangan, dan Sumber Daya Saparila Worokinasih, S.Sos., M.Si., Ph.D.
+      - Wakil Dekan Bidang Kemahasiswaan Doktor Moh. Said, S.Sos., M.AP.
+    prodi: >-
+      Sarjana Administrasi Bisnis, Administrasi Publik, Pariwisata, Perpajakan, Ilmu Perpustakaan, dan Administrasi Pendidikan;
+      Magister Administrasi Bisnis, Administrasi Publik, dan Manajemen Pendidikan Tinggi; serta Doktor Ilmu Administrasi.
+    sejarah: >-
+      FIA berawal dari Fakultas Administrasi Niaga yang didirikan 10 November 1960, berganti nama menjadi Fakultas Ketatanegaraan
+      dan Ketataniagaan pada 30 September 1962, lalu menjadi Fakultas Ilmu Administrasi pada 1982.
+      Administrasi Bisnis FIA terakreditasi internasional IACBE dan AASBI.
+    biaya_prodi: [Administrasi Pendidikan, Administrasi Bisnis, Administrasi Publik, Ilmu Perpustakaan, Perpajakan, Pariwisata]
+    sumber: [fia_pimpinan, fia_dekanat2025, fia_home, ub_sejarah, ub_akreditasi]
+
+  - kode: F04
+    singkatan: FBiPK
+    nama: Fakultas Bio-Industri Pertanian dan Kehutanan
+    nama_lama: Fakultas Pertanian
+    situs: fbipk.ub.ac.id
+    alamat: Jalan Veteran, Ketawanggede, Lowokwaru, Malang 65145
+    telepon: "(0341) 565845"
+    email: fbipk@ub.ac.id
+    dekan: Profesor Mangku Purnomo, S.P., M.Si., Ph.D.
+    wakil_dekan:
+      - Wakil Dekan I Profesor Doktor Afifuddin Latif Adiredjo, S.P., M.Sc.
+      - Wakil Dekan II Doktor Fahriyah, S.P., M.Si.
+      - Wakil Dekan III Doktor Noer Rahmi Ardiarini, S.P., M.Si.
+    prodi: >-
+      Sarjana Agroekoteknologi, Agribisnis, dan Kehutanan; Agroekoteknologi dan Agribisnis juga dibuka di PSDKU Kediri.
+      Magister Ilmu Tanaman, Pengelolaan Tanah dan Air, dan Ekonomi Pertanian; serta Doktor Ilmu Pertanian.
+    sejarah: >-
+      Nama Fakultas Pertanian diubah menjadi Fakultas Bio-Industri Pertanian dan Kehutanan sejak 2 Mei 2026 berdasarkan
+      Peraturan Rektor Nomor 44 Tahun 2026. Fakultas Pertanian sudah menjadi bagian UB sejak 1961.
+    biaya_prodi: [Agroekoteknologi, Agroekoteknologi (PSDKU Kediri), Kehutanan, Agribisnis, Agribisnis (PSDKU Kediri)]
+    sumber: [fbipk_manajemen, fbipk_kontak, detik_rename, ub_sejarah, selma_ukt]
+
+  - kode: F05
+    singkatan: FAST
+    nama: Fakultas Sains dan Teknologi Peternakan
+    nama_lama: Fakultas Peternakan
+    situs: fast.ub.ac.id
+    alamat: Jalan Veteran, Malang
+    telepon: "(0341) 553513"
+    email: fapetub@ub.ac.id
+    dekan: Profesor Doktor Insinyur Muhammad Halim Natsir, S.Pt., M.P., IPM., ASEAN Eng.
+    wakil_dekan:
+      - Wakil Dekan I Insinyur Rizki Prafitri, S.Pt., M.A., Ph.D.
+      - Wakil Dekan II Doktor Insinyur Agus Susilo, S.Pt., M.P.
+      - Wakil Dekan III Doktor Insinyur Eko Widodo, M.Agr.Sc.
+    prodi: >-
+      Sarjana Peternakan, juga dibuka di PSDKU Kediri, dan Sarjana Industri Peternakan Cerdas;
+      serta Magister dan Doktor Ilmu Ternak.
+    sejarah: >-
+      Nama Fakultas Peternakan diubah menjadi Fakultas Sains dan Teknologi Peternakan sejak 2 Mei 2026.
+      Fakultas ini berakar dari Fakultas Kedokteran Hewan dan Peternakan yang didirikan UB pada 26 Oktober 1961.
+    biaya_prodi: [Peternakan, Peternakan (PSDKU Kediri), Industri Peternakan Cerdas]
+    sumber: [fast_struktur, fast_home, detik_rename, ub_sejarah, selma_ukt]
+
+  - kode: F06
+    singkatan: FPIK
+    nama: Fakultas Perikanan dan Ilmu Kelautan
+    situs: fpik.ub.ac.id
+    alamat: Jalan Veteran, Malang 65145
+    telepon: "(0341) 553512"
+    dekan: Profesor Doktor Asep Awaludin Prihanto, S.Pi., M.P., periode 2025 sampai 2030
+    wakil_dekan:
+      - Wakil Dekan Bidang Akademik Riski Agung Lestariadi, S.Pi., M.P., Ph.D.
+      - Wakil Dekan Bidang Umum, Keuangan, dan Sumber Daya Rahmi Nurdiani, S.Pi., M.App.Sc., Ph.D.
+      - Wakil Dekan Bidang Kemahasiswaan Doktor Fuad, S.Pi., M.T.
+    prodi: >-
+      Sarjana Budidaya Perairan, Manajemen Sumber Daya Perairan, Teknologi Hasil Perikanan, Agrobisnis Perikanan,
+      Pemanfaatan Sumber Daya Perikanan, dan Ilmu Kelautan; Sarjana Akuakultur dan Sosial Ekonomi Perikanan di PSDKU Kediri;
+      Magister Budidaya Perairan; serta Doktor Ilmu Perikanan dan Kelautan.
+    sejarah: >-
+      FPIK berawal dari Perguruan Tinggi Jurusan Perikanan Laut yang dibuka di Probolinggo pada 28 Oktober 1961,
+      yang pada 1963 menjadi jurusan di Fakultas Kedokteran Hewan dan Peternakan UB.
+    biaya_prodi: [Budidaya Perairan, Manajemen Sumber Daya Perairan, Teknologi Hasil Perikanan, Akuakultur (PSDKU Kediri), Agrobisnis Perikanan, Sosial Ekonomi Perikanan (PSDKU Kediri), Pemanfaatan Sumber Daya Perikanan, Ilmu Kelautan]
+    sumber: [fpik_pimpinan, fpik_dekan2025, fpik_home, ub_sejarah, selma_ukt]
+
+  - kode: F07
+    singkatan: FK
+    nama: Fakultas Kedokteran
+    situs: fk.ub.ac.id
+    dekan: Profesor Doktor dokter Wisnu Barlianto, M.Si.Med., Sp.A(K)
+    wakil_dekan:
+      - Wakil Dekan Bidang Akademik Profesor dokter Mohammad Saifur Rohman, Sp.JP(K), Ph.D.
+      - Wakil Dekan Bidang Umum, Keuangan, dan Sumber Daya Doktor Husnul Khotimah, S.Si., M.Kes.
+      - Wakil Dekan Bidang Kemahasiswaan Doktor dokter Shahdevi Nandar Kurniawan, Sp.S(K)
+    departemen: Departemen Kedokteran, Departemen Farmasi, Departemen Kebidanan, dan Departemen Sekolah Spesialis dan Subspesialis.
+    prodi: >-
+      Sarjana Kedokteran, Kebidanan, dan Farmasi; Profesi Dokter, Bidan, dan Apoteker; Magister Ilmu Biomedik, Manajemen Rumah Sakit,
+      dan Kebidanan; Doktor Ilmu Kedokteran; serta berbagai Program Pendidikan Dokter Spesialis.
+      Rumah Sakit Universitas Brawijaya terakreditasi KARS Paripurna.
+    biaya_prodi: [Kedokteran, Kebidanan, Farmasi]
+    sumber: [fk_pimpinan, fk_home, selma_ukt, ub_prestasi]
+
+  - kode: F08
+    singkatan: FT
+    nama: Fakultas Teknik
+    situs: teknik.ub.ac.id
+    alamat: Jalan MT. Haryono Nomor 167, Ketawanggede, Lowokwaru, Malang 65145
+    telepon: "(0341) 587710"
+    email: teknik@ub.ac.id
+    dekan: Profesor Insinyur Hadi Suyono, S.T., M.T., Ph.D., IPU., menjabat sejak 2021 dan kembali menjabat untuk periode 2025 sampai 2030
+    wakil_dekan:
+      - Wakil Dekan Bidang Akademik Doktor Insinyur Indradi Wijatmiko, S.T., M.Eng.
+      - Wakil Dekan Bidang Umum, Keuangan, dan Sumber Daya Manusia Insinyur Ismu Rini Dwi Ari, M.T., Ph.D.
+      - Wakil Dekan Bidang Kemahasiswaan Insinyur L Tri Wijaya N. Kusuma, S.T., M.T., Ph.D.
+    prodi: >-
+      Sarjana Teknik Sipil, Teknik Mesin, Teknik Elektro, Teknik Pengairan, Arsitektur, Perencanaan Wilayah dan Kota,
+      Teknik Industri, dan Teknik Kimia; berbagai program Magister dan Doktor teknik; serta Profesi Insinyur dan Profesi Arsitek.
+      Teknik Elektro terakreditasi internasional IABEE.
+    sejarah: >-
+      Fakultas Teknik resmi dibuka berdasarkan SK Menteri PTIP Nomor 167 Tahun 1963 tanggal 23 Oktober 1963,
+      awalnya dengan jurusan Teknik Sipil dan Teknik Mesin. Fakultas Teknik tidak ikut berganti nama pada 2026.
+    biaya_prodi: [Teknik Sipil, Teknik Mesin, Teknik Elektro, Teknik Pengairan, Arsitektur, Perencanaan Wilayah dan Kota, Teknik Industri, Teknik Kimia]
+    sumber: [ft_pimpinan, ft_sejarah, selma_ukt, ub_akreditasi, detik_rename]
+
+  - kode: F09
+    singkatan: FSTeM
+    nama: Fakultas Sains, Teknologi, dan Matematika
+    nama_lama: Fakultas Matematika dan Ilmu Pengetahuan Alam atau FMIPA
+    situs: stem.ub.ac.id
+    alamat: Gedung MIPA Center, Jalan Veteran, Lowokwaru, Malang 65145
+    telepon: "(0341) 554403"
+    email: stem@ub.ac.id
+    dekan: Profesor Insinyur Sukir Maryanto, S.Si., M.Si., Ph.D., periode 2025 sampai 2030
+    wakil_dekan:
+      - Wakil Dekan Bidang Akademik Nurjannah, S.Si., M.Phil., Ph.D.
+      - Wakil Dekan Bidang Umum, Keuangan, dan Sumber Daya Zulfaidah Penata Gama, S.Si., M.Si., Ph.D.
+      - Wakil Dekan Bidang Kemahasiswaan Profesor Chomsin Sulistya Widodo, S.Si., M.Si., Ph.D.
+    departemen: Departemen Biologi, Kimia, Fisika, Matematika, dan Statistika.
+    prodi: >-
+      Sarjana Biologi, Kimia, Fisika, Teknik Geofisika, Instrumentasi, Matematika, Ilmu Aktuaria, Statistika, Sains Data,
+      dan Bioinformatika; Magister Biologi, Kimia, Fisika, Matematika, dan Statistika; serta Doktor Biologi dan Kimia.
+    sejarah: >-
+      Nama FMIPA diubah menjadi Fakultas Sains, Teknologi, dan Matematika sejak 2 Mei 2026.
+      Rektor UB saat ini, Profesor Widodo, adalah mantan Dekan FMIPA.
+    biaya_prodi: [Biologi, Kimia, Fisika, Teknik Geofisika, Instrumentasi, Matematika, Ilmu Aktuaria, Statistika, Sains Data, Bioinformatika]
+    sumber: [stem_manajemen, stem_home, detik_rename, ub_pejabat, selma_ukt]
+
+  - kode: F10
+    singkatan: FTAB
+    nama: Fakultas Teknologi Agroindustri dan Biosistem
+    nama_lama: Fakultas Teknologi Pertanian atau FTP
+    situs: tab.ub.ac.id
+    alamat: Jalan Veteran, Ketawanggede, Lowokwaru, Malang 65145
+    telepon: "(0341) 580106"
+    dekan: Profesor Yusuf Hendrawan, S.TP., M.App.Life.Sc., Ph.D.
+    wakil_dekan:
+      - Wakil Dekan I Bidang Akademik Endrika Widyastuti, S.Pt., M.Sc., M.P., Ph.D.
+      - Wakil Dekan II Bidang Umum, Keuangan, dan Sumber Daya Doktor Dodyk Pranowo, S.TP., M.Si.
+      - Wakil Dekan III Bidang Kemahasiswaan Doktor Insinyur Mochamad Bagus Hermanto, S.TP., M.Sc.
+    prodi: >-
+      Sarjana Teknologi Pangan, Bioteknologi, Teknik Pertanian dan Biosistem, Teknik Lingkungan, Teknologi Bioproses,
+      dan Teknologi Industri Pertanian; Magister Teknologi Industri Pertanian, Teknologi Hasil Pertanian, dan Keteknikan Pertanian;
+      serta Doktor Teknologi Industri Pertanian dan Ilmu Pangan.
+    sejarah: >-
+      Nama Fakultas Teknologi Pertanian diubah menjadi Fakultas Teknologi Agroindustri dan Biosistem sejak 2 Mei 2026.
+      Program studi Ilmu dan Teknologi Pangan terakreditasi internasional IFT.
+    biaya_prodi: [Teknologi Pangan, Bioteknologi, Teknik Pertanian dan Biosistem, Teknik Lingkungan, Teknologi Bioproses, Teknologi Industri Pertanian]
+    sumber: [tab_pimpinan, tab_home, detik_rename, selma_ukt, ub_akreditasi]
+
+  - kode: F11
+    singkatan: FISIP
+    nama: Fakultas Ilmu Sosial dan Ilmu Politik
+    situs: fisip.ub.ac.id
+    alamat: Jalan Veteran, Malang 65145
+    telepon: "(0341) 575755"
+    email: fisip@ub.ac.id
+    dekan: Doktor Ahmad Imron Rozuli, S.E., M.Si., periode 2025 sampai 2030
+    wakil_dekan:
+      - Wakil Dekan Bidang Akademik Reza Safitri, S.Sos., M.Si., Ph.D.
+      - Wakil Dekan Bidang Umum, Keuangan, dan Sumber Daya Manusia Doktor Muhammad Lukman Hakim, S.IP., M.Si.
+      - Wakil Dekan Bidang Kemahasiswaan Doktor Sumi Lestari, S.Psi., M.Si.
+    prodi: >-
+      Sarjana Sosiologi, Ilmu Komunikasi, Psikologi, Ilmu Politik, Ilmu Pemerintahan, dan Hubungan Internasional;
+      Magister Ilmu Komunikasi dan Ilmu Sosial; serta Doktor Sosiologi.
+    biaya_prodi: [Sosiologi, Ilmu Komunikasi, Psikologi, Ilmu Politik, Ilmu Pemerintahan, Hubungan Internasional]
+    sumber: [fisip_dekanat, fisip_home, selma_ukt]
+
+  - kode: F12
+    singkatan: FIB
+    nama: Fakultas Ilmu Budaya
+    situs: fib.ub.ac.id
+    alamat: Jalan Veteran, Malang 65145
+    telepon: "(0341) 575875"
+    dekan: Sahiruddin, M.A., Ph.D., periode 2025 sampai 2030
+    wakil_dekan:
+      - Wakil Dekan I Doktor Yusri Fajar, S.S., M.A.
+      - Wakil Dekan II Doktor Didik Hartono, S.S., M.Pd.
+      - Wakil Dekan III Ismatul Khasanah, S.Pd., M.Pd., M.Ed., Ph.D.
+    departemen: >-
+      Departemen Bahasa dan Sastra, Departemen Pendidikan Bahasa, serta Departemen Seni dan Antropologi Budaya.
+    prodi: >-
+      Sarjana Sastra Inggris, Sastra Jepang, Bahasa dan Sastra Prancis, Sastra Cina, Pendidikan Bahasa Inggris,
+      Pendidikan Bahasa Jepang, Pendidikan Bahasa dan Sastra Indonesia, Antropologi, dan Seni Rupa Murni; serta Magister Ilmu Linguistik.
+    biaya_prodi: [Bahasa dan Sastra Prancis, Pendidikan Bahasa dan Sastra Indonesia, Sastra Cina, Sastra Inggris, Sastra Jepang, Pendidikan Bahasa Inggris, Pendidikan Bahasa Jepang, Seni Rupa Murni, Antropologi]
+    sumber: [fib_pimpinan, fib_home, selma_ukt]
+
+  - kode: F13
+    singkatan: FKH
+    nama: Fakultas Kedokteran Hewan
+    situs: fkh.ub.ac.id
+    alamat: Kampus Dieng, Jalan Puncak Dieng, Kunci, Kalisongo, Kecamatan Dau, Kabupaten Malang 65151
+    telepon: "(0341) 5029152"
+    dekan: dokter hewan Dyah Ayu Oktavianie, M.Biotech., periode 2025 sampai 2030
+    wakil_dekan:
+      - Wakil Dekan Bidang Akademik dokter hewan Ahmad Fauzi, M.Sc., Ph.D.
+    prodi: >-
+      Sarjana Pendidikan Dokter Hewan dan Profesi Dokter Hewan. FKH memiliki Rumah Sakit Hewan Pendidikan UB.
+    biaya_prodi: [Pendidikan Dokter Hewan]
+    sumber: [fkh_struktur, fkh_kontak, selma_ukt, ub_kesehatan]
+
+  - kode: F14
+    singkatan: FILKOM
+    nama: Fakultas Ilmu Komputer
+    situs: filkom.ub.ac.id
+    alamat: Jalan Veteran Nomor 8, Ketawanggede, Lowokwaru, Malang 65145
+    telepon: "(0341) 577911"
+    dekan: >-
+      Insinyur Tri Astoto Kurniawan, S.T., M.T., Ph.D., IPM., periode 2025 sampai 2030. Kantor dekan berada di Gedung F lantai 7.
+    wakil_dekan:
+      - Wakil Dekan Bidang Akademik Sabriansyah Rizqika Akbar, S.T., M.Eng., Ph.D.
+      - Wakil Dekan Bidang Umum, Keuangan, dan Sumber Daya Doktor Eng. Gembong Edhi Setyawan, S.T., M.T.
+      - Wakil Dekan Bidang Kemahasiswaan, Alumni, dan Kewirausahaan Doktor Eng. Budi Darma Setiawan, S.Kom., M.Cs.
+    departemen: >-
+      Departemen Teknik Informatika, diketuai Rekyan Regasari Mardi Putri, Ph.D., menaungi Doktor Ilmu Komputer, Magister Ilmu Komputer,
+      Sarjana Teknik Informatika, dan Sarjana Teknik Komputer. Departemen Sistem Informasi, diketuai Doktor Insinyur Fajar Pradana,
+      menaungi Magister Sistem Informasi, Sarjana Sistem Informasi, Sarjana Teknologi Informasi, dan Sarjana Pendidikan Teknologi Informasi.
+    prodi: >-
+      Sarjana Teknik Informatika, Teknik Komputer, Sistem Informasi, Teknologi Informasi, dan Pendidikan Teknologi Informasi,
+      semuanya terakreditasi Unggul. Magister Ilmu Komputer terakreditasi Unggul. Magister Sistem Informasi dan Doktor Ilmu Komputer
+      terakreditasi Baik.
+    sejarah: >-
+      FILKOM berawal dari Program Teknologi Informasi dan Ilmu Komputer atau PTIIK yang dibentuk dengan SK Rektor Nomor 516/SK/2011
+      tanggal 27 Oktober 2011, gabungan program studi Teknik Perangkat Lunak dari Fakultas Teknik dan Ilmu Komputer dari FMIPA.
+      PTIIK resmi menjadi Fakultas Ilmu Komputer pada 10 Desember 2014.
+    biaya_prodi: [Teknik Informatika, Teknik Komputer, Sistem Informasi, Pendidikan Teknologi Informasi, Teknologi Informasi]
+    sumber: [filkom_pimpinan, filkom_struktur, filkom_prodi, filkom_sejarah, selma_ukt]
+
+  - kode: F15
+    singkatan: FKG
+    nama: Fakultas Kedokteran Gigi
+    situs: fkg.ub.ac.id
+    alamat: Jalan Veteran, Malang 65145
+    telepon: "(0341) 576161"
+    email: fkg@ub.ac.id
+    dekan: Doktor dokter gigi Yuanita Lely Rachmawati, M.Kes., periode 2025 sampai 2030
+    wakil_dekan:
+      - Wakil Dekan Bidang Akademik Doktor Nur Masita Silviana, drg., Sp.Ort.
+      - Wakil Dekan Bidang Umum dan Keuangan Citra Insany Irgananda, drg., M.Med.Ed.
+      - Wakil Dekan Bidang Kemahasiswaan Sinta Candra Wardani, drg., M.Biomed.
+    prodi: >-
+      Sarjana Kedokteran Gigi dan Profesi Dokter Gigi. FKG memiliki Rumah Sakit Gigi dan Mulut UB.
+    biaya_prodi: [Kedokteran Gigi]
+    sumber: [fkg_pimpinan, fkg_home, selma_ukt, ub_kesehatan]
+
+  - kode: F16
+    singkatan: FV
+    nama: Fakultas Vokasi
+    situs: vokasi.ub.ac.id
+    alamat: Jalan Veteran Nomor 12 sampai 14, Ketawanggede, Malang; juga di Kampus Dieng
+    telepon: "(0341) 553240"
+    email: vokasi@ub.ac.id
+    dekan: Mukhammad Kholid Mawardi, S.Sos., M.A.B., Ph.D., periode 2025 sampai 2030
+    wakil_dekan:
+      - Wakil Dekan Bidang Akademik Doktor A. Faidlal Rahman, S.E.Par., M.Sc.
+      - Wakil Dekan Bidang Umum, Keuangan, dan Sumber Daya Hery Toiba, S.P., M.P., Ph.D.
+      - Wakil Dekan Bidang Kemahasiswaan San Rudiyanto, S.E., M.S.A., Ak.
+    departemen: >-
+      Departemen Bisnis dan Hospitality serta Departemen Industri Kreatif dan Digital.
+    prodi: >-
+      Sarjana Terapan Manajemen Perhotelan, Pemasaran Digital, Bisnis Jasa Makanan, Penilaian Properti dan Bisnis,
+      Perbankan dan Keuangan Digital, Teknologi Rekayasa Perangkat Lunak, dan Desain Grafis; serta Diploma Tiga Keuangan dan Perbankan,
+      Administrasi Bisnis, dan Teknologi Informasi. Gedung baru Fakultas Vokasi sedang dibangun di Kampus UB Kepanjen.
+    biaya_prodi: [Manajemen Perhotelan, Desain Grafis, Administrasi Bisnis (d.h. Kesekretariatan), Keuangan dan Perbankan, Teknologi Informasi (d.h. Teknik Komputer)]
+    sumber: [vokasi_home, vokasi_pimpinan, selma_ukt, aset_kepanjen]
+
+  - kode: F17
+    singkatan: FIKES
+    nama: Fakultas Ilmu Kesehatan
+    situs: fikes.ub.ac.id
+    alamat: Kampus Dieng, Puncak Dieng Eksklusif, Kunci, Kalisongo, Kecamatan Dau, Kabupaten Malang 65151
+    telepon: "(0341) 5080686"
+    email: fikes@ub.ac.id
+    dekan: Profesor Dian Handayani, S.KM., M.Kes., Ph.D., periode 2025 sampai 2030
+    wakil_dekan:
+      - Wakil Dekan Bidang Akademik Doktor Kuswantoro Rusca Putra, S.Kp., M.Kep.
+      - Wakil Dekan Bidang Umum, Keuangan, dan Sumber Daya Doktor Asti Melani Astari, S.Kp., M.Kep., Sp.Mat.
+      - Wakil Dekan Bidang Kemahasiswaan Doktor Nia Novita Wirawan, S.TP., M.Sc.
+    departemen: Departemen Keperawatan dan Departemen Gizi.
+    prodi: >-
+      Enam program studi: Sarjana Ilmu Keperawatan, Profesi Ners, Magister Keperawatan, Sarjana Ilmu Gizi, Profesi Dietisien,
+      dan Magister Ilmu Gizi.
+    biaya_prodi: [Ilmu Keperawatan, Ilmu Gizi]
+    sumber: [fikes_home, fikes_pimpinan, selma_ukt]
+
+  - kode: F18
+    singkatan: SPUB
+    nama: Sekolah Pascasarjana
+    situs: spub.ub.ac.id
+    alamat: Jalan MT. Haryono Nomor 169, Malang 65145
+    telepon: "(0341) 571260"
+    dekan: >-
+      Sekolah Pascasarjana dipimpin Direktur, yaitu Profesor Doktor Moh. Khusaini, S.E., M.Si., M.A.
+    wakil_dekan:
+      - Wakil Direktur Bidang Akademik dan Kerja Sama Doktor Aji Setyanto, S.S., M.Litt.
+      - Wakil Direktur Bidang Keuangan dan Umum Rika Kurniaty, S.H., M.A., Ph.D.
+    prodi: >-
+      Program lintas disiplin: Magister Pengelolaan Sumberdaya Lingkungan dan Pembangunan, Magister Kajian Wanita,
+      Magister Wawasan Pertahanan Nasional, Magister Kepemimpinan dan Inovasi Kebijakan, serta Doktor Ilmu Lingkungan.
+    biaya_prodi: []
+    sumber: [spub_pimpinan, spub_home, selma_ukt]
+
+# ===========================================================================
+# FAQ (BAGIAN 19). Jawaban siap ucap, dijawab langsung tanpa LLM bila cocok.
+#   q         : pertanyaan baku
+#   variasi   : cara lain orang menanyakan hal yang sama (dipakai untuk pencocokan embedding)
+#   a         : jawaban yang diucapkan robot (hanya fakta dari KB ini)
+#   entitas   : kode fakultas (mis. F14) bila FAQ khusus satu fakultas, atau "bebas"
+#               bila FAQ boleh dijawab walau pertanyaan menyebut nama fakultas.
+#               Tanpa entitas: FAQ ditolak bila pertanyaan menyebut fakultas tertentu.
+# FAQ dekan, program studi, dan lokasi tiap fakultas dibuat otomatis oleh build_kb.py.
+# ===========================================================================
+faq:
+  # ---------------------------------------------------------------- sapaan dan robot
+  - id: sapaan
+    q: Halo Bron, apa kabar?
+    variasi: [halo, hai Bron, apa kabar, selamat pagi, selamat siang, selamat sore, hai apa kabar kamu]
+    a: Halo! Kabar Bron baik. Ada yang ingin kamu ketahui tentang Universitas Brawijaya?
+    sumber: [tim_brone]
+  - id: terima-kasih
+    q: Terima kasih, Bron.
+    variasi: [terima kasih, makasih, makasih ya Bron, terima kasih banyak, thank you]
+    a: Sama-sama! Senang bisa membantu. Kalau ada pertanyaan lain tentang UB, tanya saja.
+    sumber: [tim_brone]
+  - id: siapa-kamu
+    q: Siapa kamu?
+    variasi: [kamu siapa, siapa namamu, perkenalkan dirimu, namamu siapa, kamu itu siapa, siapa nama robot ini, kamu robot apa namanya]
+    a: Saya Bron, robot humanoid maskot Universitas Brawijaya. Saya bisa menjawab pertanyaan seputar UB.
+    sumber: [ub_brand, tim_brone]
+  - id: kemampuan
+    q: Kamu bisa apa saja?
+    variasi: [apa saja kemampuanmu, kamu bisa ngapain, apa yang bisa kamu lakukan, kamu bisa berjalan tidak, kamu bisa bergerak tidak, kamu bisa melambai tidak]
+    a: >-
+      Saya bisa mendengar pertanyaan dan menjawab informasi seputar Universitas Brawijaya, menampilkan ekspresi wajah,
+      dan menatap lawan bicara. Saya belum bisa bergerak seperti melambai atau berjalan.
+    sumber: [tim_brone]
+  - id: bentuk-robot
+    q: Robot BRONE berbentuk apa?
+    variasi: [kamu berbentuk apa, robot BRONE itu seperti apa, apakah kamu robot humanoid, Bron itu robot jenis apa]
+    a: Bron berbentuk robot humanoid, yaitu robot yang menyerupai manusia, sebagai wujud maskot BRONE Universitas Brawijaya.
+    sumber: [ub_brand, filkom_nirc2025]
+  - id: kepanjangan-brone
+    q: Apa kepanjangan BRONE?
+    variasi: [BRONE singkatan dari apa, arti nama BRONE, BRONE itu artinya apa, kepanjangan Bron]
+    a: BRONE adalah singkatan dari Brawijaya Number One, maskot resmi Universitas Brawijaya.
+    sumber: [ub_brand]
+  - id: makna-maskot
+    q: Apa makna maskot BRONE?
+    variasi: [filosofi maskot BRONE, kenapa maskot UB berbentuk robot, makna maskot Universitas Brawijaya, maskot UB itu apa]
+    a: >-
+      BRONE adalah maskot resmi UB berupa robot pendamping yang menjadi pemandu informasi, mampu belajar,
+      dan terus berkembang. Bentuk robot melambangkan inovasi serta kekuatan daya saing.
+    sumber: [ub_brand]
+  - id: warna-maskot
+    q: Apa arti warna maskot BRONE?
+    variasi: [arti warna BRONE, kenapa BRONE warnanya biru dan kuning, makna warna maskot UB, filosofi warna BRONE]
+    a: Warna biru, kuning, silver, dan hitam pada BRONE melambangkan kepercayaan, kebahagiaan, modernisasi, dan elegan.
+    sumber: [ub_brand]
+  - id: pembuat-robot
+    q: Siapa yang membuat kamu?
+    variasi: [siapa pembuatmu, kamu dibuat oleh siapa, siapa yang mengembangkan robot BRONE, kamu buatan siapa, tim pembuat robot BRONE dari mana, siapa yang bikin robot ini]
+    a: >-
+      Bron dikembangkan melalui program UB Globalizing Project Robot BRONE oleh dosen, mahasiswa, dan alumni
+      dari Fakultas Ilmu Komputer, Teknik Elektro, dan Teknik Mesin UB.
+    sumber: [filkom_pitoyo2026, filkom_workshop2024]
+    entitas: bebas
+  - id: prestasi-robot
+    q: Apa prestasi tim robot BRONE?
+    variasi: [prestasi robot BRONE apa saja, tim BRONE pernah juara apa, BRONE pernah ikut lomba apa, pencapaian tim robot BRONE]
+    a: >-
+      Tim BRONE meraih Juara 3 Best Performance Team pada National Industrial Robotic Competition 2025
+      di Universitas Negeri Padang, bersaing dengan 34 tim dari 20 perguruan tinggi.
+    sumber: [filkom_nirc2025]
+  - id: kerja-sama-jepang
+    q: Apa kerja sama tim BRONE dengan Jepang?
+    variasi: [workshop robot BRONE dengan Chukyo University, BRONE pernah kerja sama dengan universitas Jepang, siapa Profesor Pitoyo Hartono]
+    a: >-
+      Pada 30 Agustus 2024 UB dan Chukyo University dari Jepang mengadakan workshop pengembangan teknologi robot
+      untuk tim robot BRONE, dengan narasumber Profesor Pitoyo Hartono.
+    sumber: [filkom_workshop2024]
+  - id: lms-brone
+    q: Apa itu LMS BRONE?
+    variasi: [BRONE ub ac id itu apa, LMS BRONE untuk apa, platform BRONE itu apa, e-learning BRONE itu apa]
+    a: >-
+      LMS BRONE adalah Learning Management System atau platform pembelajaran daring di brone.ub.ac.id
+      yang dipakai FILKOM dan Fakultas Kedokteran untuk perkuliahan.
+    sumber: [filkom_fasilitas]
+
+  # ---------------------------------------------------------------- profil UB
+  - id: lokasi-ub
+    q: Di mana kampus UB?
+    variasi: [UB itu di mana, lokasi Universitas Brawijaya di mana, alamat kampus UB, kampus Brawijaya ada di kota apa, kampus utama UB di mana, UB ada di jalan apa]
+    a: >-
+      Kampus utama Universitas Brawijaya ada di Jalan Veteran, Kota Malang, Jawa Timur. UB juga punya Kampus Dieng
+      di Kabupaten Malang, PSDKU di Kediri, dan kampus baru yang sedang dibangun di Kepanjen.
+    sumber: [ub_stat, aset_kepanjen]
+  - id: moto
+    q: Apa moto UB?
+    variasi: [semboyan UB apa, motto Universitas Brawijaya, slogan UB, apa arti Building Up Noble Future]
+    a: Moto UB adalah Building Up Noble Future, yang berarti membangun kemuliaan masa depan.
+    sumber: [ub_profil, ub_brand]
+  - id: luas-kampus
+    q: Berapa luas kampus UB?
+    variasi: [luas UB berapa hektare, seberapa besar kampus Brawijaya, luas lahan UB, UB luasnya berapa]
+    a: >-
+      Kampus utama UB di Jalan Veteran luasnya sekitar 51,6 hektare. Secara keseluruhan aset lahan UB sekitar 981 hektare,
+      termasuk lahan penelitian dan hutan pendidikan UB Forest.
+    sumber: [ub_stat, web_aset981]
+  - id: jumlah-fakultas
+    q: Berapa jumlah fakultas di UB?
+    variasi: [UB punya berapa fakultas, ada berapa fakultas di Brawijaya, jumlah fakultas Universitas Brawijaya, fakultas di UB ada berapa]
+    a: UB memiliki 17 fakultas ditambah Sekolah Pascasarjana, dengan 197 program studi.
+    sumber: [detik_rename, ub_stat]
+  - id: daftar-fakultas
+    q: Apa saja fakultas di UB?
+    variasi: [sebutkan fakultas di UB, fakultas apa saja yang ada di Brawijaya, daftar fakultas Universitas Brawijaya, UB punya fakultas apa saja]
+    a: >-
+      Fakultas di UB adalah Hukum, Ekonomi dan Bisnis, Ilmu Administrasi, Bio-Industri Pertanian dan Kehutanan,
+      Sains dan Teknologi Peternakan, Perikanan dan Ilmu Kelautan, Kedokteran, Teknik, Sains Teknologi dan Matematika,
+      Teknologi Agroindustri dan Biosistem, Ilmu Sosial dan Ilmu Politik, Ilmu Budaya, Kedokteran Gigi, Kedokteran Hewan,
+      Ilmu Komputer, Vokasi, dan Ilmu Kesehatan, ditambah Sekolah Pascasarjana.
+    sumber: [detik_rename]
+  - id: ganti-nama-fakultas
+    q: Fakultas apa saja yang ganti nama di UB?
+    variasi: [fakultas yang berubah nama di UB, apakah ada fakultas UB yang berubah nama, FMIPA sekarang namanya apa, Fakultas Pertanian sekarang namanya apa, Fakultas Peternakan ganti nama jadi apa, Fakultas Teknologi Pertanian sekarang apa namanya]
+    a: >-
+      Sejak 2 Mei 2026 ada empat fakultas yang berganti nama. Fakultas Pertanian menjadi Fakultas Bio-Industri Pertanian
+      dan Kehutanan, Fakultas Peternakan menjadi Fakultas Sains dan Teknologi Peternakan, FMIPA menjadi Fakultas Sains,
+      Teknologi, dan Matematika, dan Fakultas Teknologi Pertanian menjadi Fakultas Teknologi Agroindustri dan Biosistem.
+      Ijazah dengan nama lama tetap sah.
+    sumber: [detik_rename]
+    entitas: bebas
+  - id: jumlah-mahasiswa
+    q: Berapa jumlah mahasiswa UB?
+    variasi: [mahasiswa UB ada berapa, berapa banyak mahasiswa di Brawijaya, jumlah mahasiswa baru UB, UB punya berapa mahasiswa]
+    a: >-
+      UB memiliki lebih dari 60.000 mahasiswa. Menurut data resmi per Juni 2025, dalam setahun ada 17.485 mahasiswa baru
+      dan 11.431 lulusan.
+    sumber: [ub_stat, ub_profil]
+  - id: jumlah-prodi
+    q: Berapa jumlah program studi di UB?
+    variasi: [UB punya berapa prodi, ada berapa jurusan di UB, jumlah jurusan di Brawijaya, berapa program studi Universitas Brawijaya]
+    a: Menurut data resmi per Juni 2025, UB memiliki 197 program studi.
+    sumber: [ub_stat]
+  - id: jumlah-guru-besar
+    q: Berapa jumlah profesor di UB?
+    variasi: [guru besar UB ada berapa, berapa profesor di Brawijaya, jumlah dosen doktor di UB, UB punya berapa guru besar]
+    a: Menurut data resmi per Juni 2025, UB memiliki 271 guru besar dan 1.076 dosen bergelar doktor.
+    sumber: [ub_stat]
+  - id: status-ptnbh
+    q: Apa status kelembagaan UB sekarang?
+    variasi: [UB itu PTNBH bukan, status UB apa, sejak kapan UB jadi PTNBH, UB negeri atau swasta, apakah UB perguruan tinggi negeri badan hukum]
+    a: UB adalah perguruan tinggi negeri berstatus PTNBH atau Perguruan Tinggi Negeri Badan Hukum berdasarkan Peraturan Pemerintah Nomor 108 Tahun 2021.
+    sumber: [prasetya_ptnbh]
+  - id: akreditasi-ub
+    q: Apa akreditasi UB?
+    variasi: [UB akreditasinya apa, akreditasi Universitas Brawijaya, apakah UB terakreditasi unggul, akreditasi institusi UB]
+    a: UB terakreditasi Unggul dari BAN-PT berdasarkan SK tanggal 21 November 2023.
+    sumber: [ub_akreditasi]
+  - id: akreditasi-internasional
+    q: Program studi UB mana yang terakreditasi internasional?
+    variasi: [prodi UB yang akreditasi internasional, jurusan UB yang terakreditasi internasional, akreditasi internasional di UB]
+    a: >-
+      Beberapa program studi UB terakreditasi internasional, antara lain Akuntansi FEB oleh ACCA, magister Akuntansi,
+      Ilmu Ekonomi, dan Manajemen FEB oleh ABEST21, Administrasi Bisnis FIA oleh IACBE dan AASBI, Teknik Elektro oleh IABEE,
+      serta Ilmu dan Teknologi Pangan oleh IFT.
+    sumber: [ub_akreditasi]
+  - id: peringkat
+    q: Berapa peringkat UB di dunia?
+    variasi: [ranking UB di dunia, peringkat QS UB, UB peringkat berapa, ranking Brawijaya berapa, peringkat UB di Asia]
+    a: >-
+      Pada QS World University Rankings 2027, UB berada di peringkat 616 dunia, naik 64 peringkat dari tahun sebelumnya.
+      Di QS Asia 2026, UB berada di peringkat 145 Asia.
+    sumber: [prasetya_qs2027, topuni]
+  - id: visi
+    q: Apa visi UB?
+    variasi: [visi Universitas Brawijaya, visi kampus Brawijaya, apa visi kampus UB]
+    a: >-
+      Visi UB adalah menjadi perguruan tinggi pelopor dan pembaharu dengan reputasi internasional dalam ilmu pengetahuan
+      dan teknologi, terutama yang menunjang industri berbasis budaya untuk kesejahteraan masyarakat.
+    sumber: [ub_visi]
+  - id: misi
+    q: Apa misi UB?
+    variasi: [misi Universitas Brawijaya, sebutkan misi UB, misi kampus Brawijaya]
+    a: >-
+      Misi UB ada empat: menyelenggarakan pendidikan berstandar internasional; menyelenggarakan penelitian yang bermanfaat
+      bagi masyarakat; menyelenggarakan pengabdian kepada masyarakat berdasarkan kearifan lokal; serta mengelola perguruan
+      tinggi yang unggul, berkeadilan, dan berkelanjutan.
+    sumber: [ub_visi]
+
+  # ---------------------------------------------------------------- sejarah
+  - id: penegerian
+    q: Kapan UB resmi menjadi universitas negeri?
+    variasi: [kapan UB jadi PTN, kapan UB didirikan, UB berdiri tahun berapa, kapan Universitas Brawijaya dinegerikan]
+    a: >-
+      Cikal bakal UB dibuka pada 1 Juli 1957, lalu UB resmi menjadi universitas negeri pada 5 Januari 1963 berdasarkan
+      SK Menteri PTIP Nomor 1 Tahun 1963. Tanggal 5 Januari diperingati sebagai Dies Natalis UB.
+    sumber: [ub_sejarah, fh_sejarah]
+  - id: asal-nama
+    q: Siapa yang memberikan nama Universitas Brawijaya dan dari mana asal nama Brawijaya?
+    variasi: [kenapa namanya Brawijaya, arti nama Brawijaya, siapa yang memberi nama Universitas Brawijaya, asal usul nama UB, Brawijaya itu diambil dari mana]
+    a: >-
+      Nama Universitas Brawijaya diberikan oleh Presiden Soekarno melalui kawat tanggal 11 Juli 1961.
+      Nama Brawijaya diambil dari gelar raja-raja Majapahit.
+    sumber: [ub_sejarah, feb_sejarah]
+  - id: nama-lama-ub
+    q: Apa nama UB sebelum bernama Universitas Brawijaya?
+    variasi: [dulu UB namanya apa, nama lama Universitas Brawijaya, sebelum jadi UB namanya apa, UB dulunya bernama apa]
+    a: >-
+      Sebelum bernama Universitas Brawijaya pada 1961, namanya Universitas Kotapraja Malang. Cikal bakalnya adalah
+      Perguruan Tinggi Hukum dan Pengetahuan Masyarakat yang dibuka 1 Juli 1957.
+    sumber: [ub_sejarah, fh_sejarah]
+  - id: fakultas-awal
+    q: Apa saja fakultas pertama UB?
+    variasi: [fakultas tertua UB apa, fakultas awal Universitas Brawijaya, dulu UB punya fakultas apa saja, fakultas yang pertama ada di UB]
+    a: >-
+      Pada 1961 UB memiliki empat fakultas, yaitu Fakultas Hukum dan Pengetahuan Masyarakat, Fakultas Ekonomi,
+      Fakultas Administrasi Niaga, dan Fakultas Pertanian. Fakultas Hukum adalah fakultas tertua di UB.
+    sumber: [ub_sejarah, fh_sejarah]
+  - id: dies-natalis
+    q: Kapan Dies Natalis UB?
+    variasi: [ulang tahun UB tanggal berapa, hari jadi Universitas Brawijaya, kapan ulang tahun Brawijaya, umur UB berapa tahun]
+    a: >-
+      Dies Natalis UB diperingati setiap 5 Januari. Pada 5 Januari 2026 UB berusia 63 tahun, dan Dies Natalis ke-64
+      jatuh pada 5 Januari 2027.
+    sumber: [ub_sejarah, kalender_akademik, malangtimes_dies63]
+
+  # ---------------------------------------------------------------- pimpinan
+  - id: rektor
+    q: Siapa rektor UB sekarang?
+    variasi: [rektor UB siapa, siapa rektor Universitas Brawijaya, nama rektor Brawijaya, siapa pemimpin UB, rektor Brawijaya sekarang siapa]
+    a: Rektor Universitas Brawijaya periode 2022 sampai 2027 adalah Profesor Widodo. Sebelumnya beliau adalah Dekan Fakultas MIPA UB.
+    sumber: [ub_pejabat, mwa_rektor]
+  - id: wakil-rektor
+    q: Siapa saja wakil rektor UB?
+    variasi: [wakil rektor UB siapa saja, daftar wakil rektor Brawijaya, siapa wakil rektor bidang akademik, siapa warek UB, wakil rektor bidang kemahasiswaan siapa]
+    a: >-
+      UB memiliki lima wakil rektor: bidang akademik Profesor Doktor Insinyur Imam Santoso; bidang keuangan dan sumber daya
+      Profesor Doktor Muchamad Ali Safaat; bidang kemahasiswaan, alumni, dan kewirausahaan mahasiswa Doktor Setiawan Noerdajasakti;
+      bidang perencanaan, kerja sama, dan internasionalisasi Profesor Andi Kurniawan; serta bidang riset dan inovasi
+      Profesor Doktor Unti Ludigdo.
+    sumber: [ub_pejabat]
+  - id: sekretaris-universitas
+    q: Siapa Sekretaris Universitas Brawijaya?
+    variasi: [sekretaris UB siapa, siapa sekretaris universitas, sekretaris Universitas Brawijaya sekarang]
+    a: Sekretaris Universitas Brawijaya adalah Doktor Tri Wahyu Nugroho.
+    sumber: [ub_pejabat]
+  - id: kantor-rektor
+    q: Di mana kantor rektor UB?
+    variasi: [ruang rektor di mana, kantor rektor lantai berapa, gedung rektorat UB di mana]
+    a: Kantor rektor berada di Gedung Rektorat UB lantai 7.
+    sumber: [ub_pejabat, mwa_rektor]
+
+  # ---------------------------------------------------------------- kampus dan lokasi
+  - id: kampus-dieng
+    q: Di mana Kampus Dieng UB?
+    variasi: [kampus Dieng UB itu di mana, fakultas apa saja di kampus Dieng, alamat kampus Dieng Brawijaya]
+    a: >-
+      Kampus Dieng UB berada di Jalan Puncak Dieng, Kalisongo, Kecamatan Dau, Kabupaten Malang. Di sana ada Fakultas
+      Kedokteran Hewan dan Fakultas Ilmu Kesehatan.
+    sumber: [ub_stat, fkh_kontak, fikes_home]
+  - id: kampus-kepanjen
+    q: Apa itu kampus UB Kepanjen?
+    variasi: [kampus baru UB di mana, UB buka kampus di Kepanjen, lokasi kampus Kepanjen UB, pembangunan kampus UB Kepanjen]
+    a: >-
+      Kampus baru UB sedang dibangun di Desa Panggungrejo, Kepanjen, Kabupaten Malang, di atas lahan sekitar 30 hektare.
+      Gedung Fakultas Vokasi juga sedang dibangun di sana.
+    sumber: [aset_kepanjen]
+    entitas: bebas
+  - id: psdku-kediri
+    q: Apakah UB punya kampus di Kediri?
+    variasi: [PSDKU UB di mana, UB Kediri, kampus UB di Kediri jurusan apa saja, apa itu PSDKU Kediri]
+    a: >-
+      Ya, UB memiliki PSDKU di Kediri. Program studi di sana antara lain Agroekoteknologi, Agribisnis, Peternakan,
+      Akuakultur, dan Sosial Ekonomi Perikanan.
+    sumber: [ub_stat, selma_ukt]
+    entitas: bebas
+  - id: kontak-ub
+    q: Berapa nomor telepon UB?
+    variasi: [nomor telepon Universitas Brawijaya, kontak UB berapa, bagaimana menghubungi UB, telepon kampus UB]
+    a: Telepon umum UB adalah 0341-551611, dan website utamanya www.ub.ac.id.
+    sumber: [ub_pejabat]
+  - id: website-ub
+    q: Apa website resmi UB?
+    variasi: [alamat website UB, situs resmi Brawijaya, web UB apa, informasi UB bisa dilihat di mana]
+    a: >-
+      Website utama UB adalah www.ub.ac.id. Pendaftaran mahasiswa baru di selma.ub.ac.id, layanan akademik di
+      akademik.ub.ac.id, dan berita resmi UB di prasetya.ub.ac.id.
+    sumber: [ub_pejabat, ub_admisi]
+  - id: layanan-akademik
+    q: Di mana layanan akademik UB?
+    variasi: [kantor akademik UB di mana, DALA UB di mana, mengurus administrasi akademik di mana, kontak layanan akademik UB]
+    a: >-
+      Layanan akademik DALA UB berada di Gedung Rektorat lantai 2. Teleponnya 0341-575754, dan emailnya
+      akademik.center@ub.ac.id.
+    sumber: [ub_admisi]
+
+  # ---------------------------------------------------------------- penerimaan dan biaya
+  - id: cara-masuk
+    q: Bagaimana cara masuk UB?
+    variasi: [bagaimana cara daftar kuliah di UB, jalur masuk UB apa saja, gimana caranya kuliah di Brawijaya, pendaftaran mahasiswa baru UB, jalur seleksi UB]
+    a: >-
+      Ada tiga jalur utama, yaitu SNBP berbasis prestasi, SNBT berbasis tes UTBK, dan Seleksi Mandiri UB.
+      Informasi seleksi mandiri ada di selma.ub.ac.id.
+    sumber: [ub_admisi]
+  - id: jalur-mandiri
+    q: Apa saja jalur Seleksi Mandiri UB?
+    variasi: [jalur mandiri UB apa saja, seleksi mandiri Brawijaya ada jalur apa, daftar jalur mandiri UB, mandiri UB pakai nilai apa]
+    a: >-
+      Pada 2026 Seleksi Mandiri UB memiliki empat jalur, yaitu Jalur Prestasi, Jalur Nilai Rapor, Jalur Nilai UTBK,
+      dan Seleksi Mandiri Penyandang Disabilitas. Pendaftaran melalui admisi.ub.ac.id. Jadwal untuk 2027 belum diumumkan.
+    sumber: [detik_ukt2026]
+    berlaku_hingga: "2027-06-30"
+  - id: daftar-pascasarjana
+    q: Kapan pendaftaran S2 dan S3 di UB?
+    variasi: [cara daftar magister di UB, pendaftaran pascasarjana UB kapan, kuliah S2 di Brawijaya daftarnya bagaimana, seleksi program doktor UB]
+    a: >-
+      Seleksi program magister dan doktor UB dibuka dua kali setahun, untuk semester ganjil dan genap,
+      melalui selma.ub.ac.id.
+    sumber: [ub_admisi]
+    entitas: F18
+  - id: disabilitas
+    q: Apakah UB menerima mahasiswa penyandang disabilitas?
+    variasi: [jalur disabilitas UB, layanan untuk mahasiswa disabilitas di UB, apa itu PSLD UB, UB ramah disabilitas tidak]
+    a: >-
+      Ya. UB membuka jalur khusus penyandang disabilitas bersama Pusat Studi dan Layanan Disabilitas UB atau PSLD,
+      yang didirikan pada 19 Maret 2012 untuk melayani mahasiswa penyandang disabilitas.
+    sumber: [ub_admisi, filkom_fasilitas]
+  - id: biaya-kuliah
+    q: Berapa biaya kuliah di UB?
+    variasi: [UKT UB berapa, berapa biaya kuliah di Brawijaya, uang kuliah UB berapa, biaya kuliah UB mahal tidak]
+    a: >-
+      Untuk jalur SNBP dan SNBT, UKT kelompok 1 sebesar 500 ribu rupiah dan kelompok 2 sebesar 1 juta rupiah per semester,
+      sedangkan kelompok lebih tinggi berbeda tiap prodi. Jalur mandiri membayar UKT ditambah IPI sekali bayar.
+      Rincian per prodi ada di selma.ub.ac.id.
+    sumber: [kompas_ukt2026, selma_ukt, selma_ipi]
+  - id: kelompok-ukt
+    q: Bagaimana kelompok UKT ditentukan?
+    variasi: [cara menentukan golongan UKT, UKT ditentukan dari apa, apakah UKT bisa dipilih sendiri]
+    a: >-
+      Kelompok UKT ditentukan dari data kemampuan ekonomi orang tua, bukan dipilih sendiri. Untuk jalur SNBP dan SNBT,
+      UKT kelompok 1 sebesar 500 ribu rupiah dan kelompok 2 sebesar 1 juta rupiah per semester.
+    sumber: [kompas_ukt2026]
+  - id: ipi
+    q: Apa itu IPI di UB?
+    variasi: [IPI itu apa, apakah jalur SNBT bayar IPI, iuran pengembangan institusi UB]
+    a: >-
+      IPI atau Iuran Pengembangan Institusi hanya berlaku untuk jalur mandiri dan dibayar sekali di awal kuliah.
+      Besarnya untuk tahun 2026 diatur dalam Peraturan Rektor Nomor 123 Tahun 2025.
+    sumber: [selma_ipi, detik_ukt2026]
+    berlaku_hingga: "2027-06-30"
+  - id: biaya-kedokteran
+    q: Berapa biaya kuliah Kedokteran UB jalur mandiri?
+    variasi: [UKT kedokteran UB berapa, biaya masuk FK UB jalur mandiri, IPI kedokteran Brawijaya, mahal tidak kuliah kedokteran di UB]
+    a: >-
+      Pada jalur mandiri 2026, UKT Kedokteran 19,16 juta sampai 24 juta rupiah per semester, dengan IPI 150 juta
+      sampai 225 juta rupiah.
+    sumber: [detik_ukt2026, selma_ipi]
+    berlaku_hingga: "2027-06-30"
+    entitas: F07
+
+  # ---------------------------------------------------------------- kalender dan wisuda
+  - id: semester-ganjil
+    q: Kapan perkuliahan semester ganjil 2026/2027?
+    variasi: [kapan UAS semester ini, kuliah semester ganjil selesai kapan, kalender akademik semester ganjil, semester ganjil berakhir kapan]
+    a: >-
+      Perkuliahan semester ganjil 2026/2027, termasuk UTS dan UAS, berlangsung 18 Agustus sampai 18 Desember 2026.
+      Semester ganjil berakhir 8 Januari 2027.
+    sumber: [kalender_akademik]
+    berlaku_hingga: "2027-01-08"
+  - id: semester-genap
+    q: Kapan semester genap 2026/2027 dimulai?
+    variasi: [kapan kuliah semester genap mulai, jadwal KRS semester genap, registrasi semester genap kapan, semester depan mulai kapan]
+    a: >-
+      Registrasi semester genap 18 sampai 29 Januari 2027, pengisian KRS 20 sampai 30 Januari 2027,
+      dan perkuliahan semester genap berlangsung 8 Februari sampai 18 Juni 2027.
+    sumber: [kalender_akademik]
+    berlaku_hingga: "2027-07-30"
+  - id: wisuda-berikutnya
+    q: Kapan wisuda UB berikutnya?
+    variasi: [kapan wisuda UB, jadwal wisuda Brawijaya, wisuda periode berikutnya kapan, wisuda bulan Oktober tanggal berapa]
+    a: >-
+      Wisuda periode lima dan enam tahun akademik 2026/2027 digelar pada 10 dan 11 Oktober 2026 di Gedung Samantha Krida.
+      Jadwal periode berikutnya belum diumumkan.
+    sumber: [ub_wisuda56]
+    berlaku_hingga: "2026-10-11"
+  - id: tempat-wisuda
+    q: Di mana wisuda UB diadakan?
+    variasi: [wisuda UB di gedung apa, lokasi wisuda Brawijaya, cara daftar wisuda UB]
+    a: >-
+      Wisuda UB digelar di Gedung Samantha Krida. Pendaftaran wisuda dilakukan melalui bagian akademik fakultas masing-masing.
+    sumber: [ub_wisuda56]
+  - id: pendamping-wisuda
+    q: Berapa pendamping yang boleh dibawa saat wisuda?
+    variasi: [wisuda boleh bawa berapa orang, pendamping wisuda masuk lewat mana, undangan wisuda UB, orang tua boleh ikut wisuda tidak]
+    a: >-
+      Setiap wisudawan boleh membawa paling banyak dua pendamping. Undangan elektronik berbentuk QR code diunduh dari SIAM,
+      dan pendamping masuk Gedung Samantha Krida melalui Pintu A atau Pintu D.
+    sumber: [ub_wisuda56]
+  - id: toga
+    q: Di mana memesan toga wisuda UB?
+    variasi: [pesan toga di mana, beli toga wisuda UB, warna kerah toga UB]
+    a: Toga bisa dipesan melalui KPRI UB, dengan warna kerah sesuai identitas fakultas.
+    sumber: [ub_wisuda56]
+
+  # ---------------------------------------------------------------- fasilitas
+  - id: fasilitas-kesehatan
+    q: Apa saja fasilitas kesehatan di UB?
+    variasi: [rumah sakit UB di mana, klinik di UB ada tidak, kalau sakit di kampus ke mana, apakah UB punya rumah sakit, poliklinik UB]
+    a: >-
+      UB memiliki Poliklinik UB, Rumah Sakit Universitas Brawijaya atau RSUB, Rumah Sakit Gigi dan Mulut UB,
+      dan Rumah Sakit Hewan Pendidikan UB. RSUB terakreditasi KARS Paripurna.
+    sumber: [ub_kesehatan, ub_prestasi]
+  - id: perpustakaan
+    q: Bagaimana layanan perpustakaan UB?
+    variasi: [jam buka perpustakaan UB, perpustakaan UB buka jam berapa, berapa buku yang boleh dipinjam, perpustakaan pusat Brawijaya]
+    a: >-
+      Perpustakaan pusat UB terakreditasi A dari Perpustakaan Nasional. Mahasiswa bisa meminjam hingga 25 buku selama 14 hari.
+      Informasi layanan dan jam buka ada di lib.ub.ac.id.
+    sumber: [ub_akreditasi, ub_lib]
+  - id: bank
+    q: Ada bank apa saja di UB?
+    variasi: [ATM di UB ada tidak, bank di kampus Brawijaya, mau ambil uang di UB di mana]
+    a: Di UB ada kantor cabang Bank BCA, Mandiri, BNI, BRI, dan BTN, serta ATM.
+    sumber: [ub_fasum]
+  - id: masjid
+    q: Apa nama masjid di UB?
+    variasi: [masjid UB di mana, tempat salat di UB, masjid kampus Brawijaya]
+    a: Masjid kampus UB bernama Masjid Raden Patah.
+    sumber: [ub_fasum]
+  - id: penginapan
+    q: Ada tempat menginap di UB?
+    variasi: [hotel di UB ada tidak, guest house UB, orang tua mahasiswa menginap di mana, penginapan dekat kampus UB]
+    a: >-
+      Ada. UB memiliki Guest House UB dan penginapan Griya Brawijaya. Griya Brawijaya, tempat menginap bagi tamu
+      dan orang tua mahasiswa, berada di seberang Gedung G FILKOM.
+    sumber: [ub_fasum, filkom_fasilitas]
+  - id: olahraga
+    q: Apa saja fasilitas olahraga di UB?
+    variasi: [tempat olahraga di UB, gym di UB ada tidak, UB Sport Center ada apa saja, lapangan sepak bola UB]
+    a: >-
+      UB memiliki Pertamina Sport Arena, Sport Clubhouse, dan lapangan sepak bola di Kampus Dieng. UB Sport Center
+      menyediakan fitnes, aerobik, tenis lapangan, bulu tangkis, tenis meja, dan futsal.
+    sumber: [ub_profil, filkom_fasilitas]
+  - id: gedung-pertemuan
+    q: Apa gedung pertemuan besar di UB?
+    variasi: [Samantha Krida itu apa, gedung acara besar UB, Widyaloka itu gedung apa]
+    a: Gedung pertemuan besar di UB adalah Gedung Samantha Krida dan Widyaloka.
+    sumber: [ub_profil]
+
+  # ---------------------------------------------------------------- prestasi, beasiswa, UKM
+  - id: pimnas
+    q: Berapa kali UB juara PIMNAS?
+    variasi: [prestasi UB di PIMNAS, UB juara umum PIMNAS berapa kali, prestasi mahasiswa UB, UB pernah juara apa]
+    a: UB enam kali menjadi juara umum PIMNAS, termasuk tiga kali berturut-turut pada 2015, 2016, dan 2017.
+    sumber: [ub_stat, ub_prestasi]
+  - id: dana-abadi
+    q: Apa itu Dana Abadi UB?
+    variasi: [dana abadi Brawijaya, beasiswa dana abadi UB, berapa dana abadi UB]
+    a: >-
+      Dana Abadi UB terkumpul sekitar 76 miliar rupiah pada 2025. Beasiswa Dana Abadi pertama disalurkan pada 12 Agustus 2025
+      kepada 50 mahasiswa dari keluarga kurang mampu, berupa subsidi UKT 3,5 juta rupiah per semester hingga semester delapan.
+    sumber: [prasetya_danaabadi]
+  - id: beasiswa
+    q: Apa saja beasiswa di UB?
+    variasi: [beasiswa UB apa saja, cara dapat beasiswa di UB, info beasiswa Brawijaya, ada beasiswa untuk mahasiswa kurang mampu tidak]
+    a: >-
+      UB menyediakan beasiswa dari pemerintah, perusahaan, dan dana abadi UB, untuk mahasiswa berprestasi maupun yang
+      kurang mampu. Informasi lengkap ada di beasiswa.ub.ac.id.
+    sumber: [ub_beasiswa, prasetya_danaabadi]
+  - id: biss
+    q: Apa itu BISS?
+    variasi: [BISS itu apa, beasiswa untuk mahasiswa asing di UB, Brawijaya International Student Scholarship itu apa, apakah UB punya beasiswa untuk mahasiswa internasional]
+    a: BISS adalah Brawijaya International Student Scholarship, beasiswa penuh dari UB untuk mahasiswa asing.
+    sumber: [kanal24_biss]
+  - id: ukm
+    q: Apa saja UKM di UB?
+    variasi: [unit kegiatan mahasiswa UB apa saja, organisasi mahasiswa di UB, ekstrakurikuler di UB, UKM yang ada di Brawijaya]
+    a: >-
+      UKM di UB terbagi dalam bidang penalaran, kesenian, olahraga, minat khusus, dan kerohanian. Contohnya pers mahasiswa UAPKM,
+      Paduan Suara Mahasiswa, Teater Kutub, Marching Band, Resimen Mahasiswa, Impala pecinta alam, Pramuka, serta berbagai
+      UKM olahraga dan bela diri.
+    sumber: [ub_ukm]
+  - id: ukm-olahraga
+    q: Apa saja UKM olahraga di UB?
+    variasi: [UKM bela diri di UB, ada UKM sepak bola di UB, UKM olahraga Brawijaya, UKM taekwondo UB ada tidak]
+    a: >-
+      UKM olahraga UB antara lain bulu tangkis, bola basket, bola voli, sepak bola, tenis lapangan, tenis meja, renang,
+      softball dan baseball, panahan, Brawijaya Chess Club, serta bela diri seperti Perisai Diri, PSHT, Tapak Suci, Merpati Putih,
+      Shorinji Kempo, Taekwondo, dan INKAI.
+    sumber: [ub_ukm]
+
+  # ---------------------------------------------------------------- FILKOM (lokasi robot)
+  - id: gedung-tertinggi
+    q: Apa gedung tertinggi di UB?
+    variasi: [gedung paling tinggi di UB, gedung F itu gedung apa, gedung tertinggi Brawijaya]
+    a: Gedung tertinggi di UB adalah Gedung F milik Fakultas Ilmu Komputer atau FILKOM.
+    sumber: [filkom_fasilitas]
+    entitas: F14
+  - id: departemen-filkom
+    q: Apa saja departemen di FILKOM?
+    variasi: [FILKOM punya departemen apa saja, departemen di Fakultas Ilmu Komputer, ada berapa departemen di FILKOM]
+    a: FILKOM memiliki dua departemen, yaitu Departemen Teknik Informatika dan Departemen Sistem Informasi.
+    sumber: [filkom_prodi]
+    entitas: F14
+  - id: akreditasi-prodi-filkom
+    q: Apa akreditasi program studi di FILKOM?
+    variasi: [akreditasi Teknik Informatika UB, akreditasi Sistem Informasi FILKOM, prodi FILKOM akreditasinya apa, Teknik Komputer UB akreditasi apa]
+    a: >-
+      Sarjana Teknik Informatika, Teknik Komputer, Sistem Informasi, Teknologi Informasi, dan Pendidikan Teknologi Informasi
+      terakreditasi Unggul. Magister Ilmu Komputer terakreditasi Unggul, sedangkan Magister Sistem Informasi dan Doktor
+      Ilmu Komputer terakreditasi Baik.
+    sumber: [filkom_prodi]
+    entitas: F14
+  - id: sejarah-filkom
+    q: Bagaimana sejarah FILKOM?
+    variasi: [kapan FILKOM berdiri, asal usul FILKOM, dulu FILKOM namanya apa, PTIIK itu apa]
+    a: >-
+      FILKOM berawal dari Program Teknologi Informasi dan Ilmu Komputer atau PTIIK yang dibentuk pada 27 Oktober 2011,
+      gabungan prodi Teknik Perangkat Lunak dari Fakultas Teknik dan Ilmu Komputer dari FMIPA. PTIIK resmi menjadi
+      Fakultas Ilmu Komputer pada 10 Desember 2014.
+    sumber: [filkom_sejarah]
+    entitas: F14
+  - id: kantor-dekan-filkom
+    q: Di mana kantor dekan FILKOM?
+    variasi: [ruang dekan FILKOM di mana, dekanat FILKOM di mana, kantor dekan Fakultas Ilmu Komputer lantai berapa]
+    a: Kantor dekan FILKOM berada di Gedung F lantai 7.
+    sumber: [filkom_struktur]
+    entitas: F14
+  - id: lab-robotika
+    q: Di mana laboratorium robotika FILKOM?
+    variasi: [lab robotika di mana, laboratorium robot FILKOM ada di gedung apa, di mana lab embedded system FILKOM, tempat lab robot di FILKOM]
+    a: Laboratorium Robotika dan Embedded System FILKOM UB berada di Gedung F Fakultas Ilmu Komputer.
+    sumber: [filkom_labs]
+    entitas: F14
+  - id: lab-brone
+    q: Di mana letak laboratorium pengembangan BRONE?
+    variasi: [lab BRONE di mana, di mana ruang tim robot BRONE, laboratorium pengembangan robot BRONE ada di mana, tempat pengembangan Bron di mana, markas tim BRONE di mana]
+    a: Ada di FILKOM Gedung A, naik ke lantai 2, ruangannya di depan Ruang Kerja Bersama A dua dua empat.
+    sumber: [tim_brone]
+    entitas: F14
+  - id: lab-filkom
+    q: Apa saja laboratorium di FILKOM?
+    variasi: [lab di FILKOM ada apa saja, berapa laboratorium FILKOM, laboratorium Fakultas Ilmu Komputer, daftar lab FILKOM]
+    a: >-
+      FILKOM memiliki delapan laboratorium, yaitu Sistem Cerdas, Rekayasa Perangkat Lunak, Robotika dan Embedded System,
+      Jaringan Berbasis Informasi, Media Game dan Mobile, Sistem Informasi, Teknologi Pembelajaran, dan Laboratorium Pembelajaran.
+    sumber: [filkom_labs]
+    entitas: F14
+  - id: helpdesk-filkom
+    q: Di mana helpdesk FILKOM?
+    variasi: [operator akademik FILKOM di mana, HaloFILKOM itu apa, mau tanya administrasi FILKOM ke mana, layanan akademik FILKOM di mana]
+    a: >-
+      Helpdesk dan operator akademik FILKOM ada di lantai 1 Gedung F. Pertanyaan administratif juga bisa diajukan
+      lewat HaloFILKOM di halofilkom.ub.ac.id.
+    sumber: [filkom_fasilitas]
+    entitas: F14
+  - id: ruang-filkom
+    q: Di mana Auditorium Algoritma FILKOM?
+    variasi: [auditorium FILKOM di mana, letak Mini Teater Heuristik, aula FILKOM di mana, Auditorium Algoritma lantai berapa]
+    a: Auditorium Algoritma ada di lantai 2 Gedung G FILKOM, dan Mini Teater Heuristik ada di lantai 2 Gedung A.
+    sumber: [filkom_fasilitas]
+    entitas: F14
+  - id: smart-class-filkom
+    q: Di mana Smart Class dan ruang baca FILKOM?
+    variasi: [ruang baca FILKOM di mana, smart class lantai berapa, tempat belajar di FILKOM]
+    a: >-
+      Smart Class ada di lantai 2, 3, dan 4 Gedung F, sedangkan Ruang Baca ada di koridor lantai 2 antara Gedung F
+      dan Gedung G FILKOM.
+    sumber: [filkom_fasilitas]
+    entitas: F14
+  - id: gkm-filkom
+    q: Apa itu Gedung Kreativitas Mahasiswa FILKOM?
+    variasi: [ruang himpunan FILKOM di mana, helipad drone FILKOM, co-working space FILKOM, gedung kreativitas mahasiswa ada apa saja]
+    a: >-
+      Gedung Kreativitas Mahasiswa FILKOM memiliki lima lantai. Lantai 1 untuk co-working space, lantai 2 dan 3 untuk ruang
+      himpunan mahasiswa, lantai 4 untuk aula, dan lantai 5 berupa helipad untuk riset drone.
+    sumber: [filkom_fasilitas]
+    entitas: F14
+  - id: mushola-filkom
+    q: Di mana mushola FILKOM?
+    variasi: [tempat salat di FILKOM, mushola Ulul Albab di mana, masjid dekat FILKOM]
+    a: Mushola Ulul Al-Baab berada di sebelah Gedung Kreativitas Mahasiswa FILKOM.
+    sumber: [filkom_fasilitas]
+    entitas: F14
+  - id: konseling-filkom
+    q: Di mana unit konseling FILKOM?
+    variasi: [layanan konseling FILKOM, konseling mahasiswa FILKOM di mana, tempat konseling di FILKOM]
+    a: Unit Konseling FILKOM ada di Gedung A.
+    sumber: [filkom_fasilitas]
+    entitas: F14
+  - id: aksesibilitas-filkom
+    q: Apakah gedung FILKOM ramah disabilitas?
+    variasi: [fasilitas disabilitas di FILKOM, lift di FILKOM ada tidak, parkir disabilitas FILKOM]
+    a: >-
+      Ya. Gedung-gedung FILKOM dilengkapi ramp, lift yang ramah tunanetra, toilet khusus disabilitas di setiap gedung,
+      dan parkir khusus penyandang disabilitas di basemen Gedung F dan G.
+    sumber: [filkom_fasilitas]
+    entitas: F14
+  - id: skripsi-filkom
+    q: Bagaimana mengurus skripsi di FILKOM?
+    variasi: [FILKOM Apps untuk apa, daftar seminar skripsi FILKOM, aplikasi skripsi FILKOM]
+    a: Skripsi di FILKOM dikelola lewat FILKOM Apps, mulai dari proposal, logbook, seminar hasil, hingga ujian.
+    sumber: [filkom_fasilitas]
+    entitas: F14
+  - id: instagram-filkom
+    q: Apa Instagram resmi FILKOM?
+    variasi: [akun Instagram FILKOM, media sosial FILKOM, IG FILKOM apa]
+    a: Instagram resmi FILKOM adalah filkomub.
+    sumber: [filkom_fasilitas]
+    entitas: F14
+  - id: sosialisasi-ortu-filkom
+    q: Kapan sosialisasi orang tua mahasiswa baru FILKOM?
+    variasi: [acara FILKOM terdekat, sosialisasi akademik orang tua FILKOM 2026, pertemuan orang tua mahasiswa baru FILKOM]
+    a: >-
+      Sosialisasi Akademik Orang Tua Mahasiswa Baru FILKOM angkatan 2026 diadakan pada 31 Oktober 2026 pukul 08.00
+      di Auditorium Algoritma Gedung G lantai 2.
+    sumber: [filkom_home]
+    berlaku_hingga: "2026-10-31"
+    entitas: F14
+
+# ===========================================================================
+# ALIAS FAKULTAS: kata/frasa yang menandakan pertanyaan menyebut fakultas tertentu.
+# Dipakai pengaman FAQ (jangan menjawab FAQ fakultas A untuk pertanyaan fakultas B)
+# dan untuk membuat variasi FAQ otomatis. Frasa terpanjang menang ("teknik informatika"
+# -> FILKOM, bukan "teknik" -> FT). Tulis huruf kecil tanpa tanda baca.
+# ===========================================================================
+alias_fakultas:
+  F01: [fakultas hukum, fh, hukum, ilmu hukum, kenotariatan]
+  F02: [fakultas ekonomi dan bisnis, feb, fakultas ekonomi, ekonomi dan bisnis, ekonomi bisnis, akuntansi, ekonomi pembangunan, ekonomi islam, kewirausahaan]
+  F03: [fakultas ilmu administrasi, fia, ilmu administrasi, administrasi bisnis, administrasi publik, perpajakan, pariwisata, ilmu perpustakaan]
+  F04: [fakultas bio-industri pertanian dan kehutanan, fakultas bio industri pertanian dan kehutanan, fbipk, fakultas pertanian, pertanian, kehutanan, agroekoteknologi, agribisnis]
+  F05: [fakultas sains dan teknologi peternakan, fast, fakultas peternakan, peternakan, fapet]
+  F06: [fakultas perikanan dan ilmu kelautan, fpik, perikanan, ilmu kelautan, kelautan, budidaya perairan, akuakultur]
+  F07: [fakultas kedokteran, fk, kedokteran, farmasi, kebidanan, dokter]
+  F08: [fakultas teknik, ft, teknik, teknik sipil, teknik mesin, teknik elektro, teknik pengairan, teknik industri, teknik kimia, arsitektur, perencanaan wilayah dan kota]
+  F09: [fakultas sains teknologi dan matematika, fstem, f stem, fmipa, mipa, fakultas mipa, fakultas matematika dan ilmu pengetahuan alam, biologi, kimia, fisika, matematika, statistika, sains data, ilmu aktuaria, teknik geofisika, bioinformatika]
+  F10: [fakultas teknologi agroindustri dan biosistem, ftab, fakultas teknologi pertanian, ftp, teknologi pertanian, agroindustri, teknologi pangan, teknik pertanian, teknik lingkungan, teknologi industri pertanian, bioteknologi]
+  F11: [fakultas ilmu sosial dan ilmu politik, fisip, ilmu sosial, ilmu politik, ilmu komunikasi, sosiologi, psikologi, hubungan internasional, ilmu pemerintahan]
+  F12: [fakultas ilmu budaya, fib, ilmu budaya, sastra inggris, sastra jepang, sastra cina, antropologi, seni rupa murni, pendidikan bahasa inggris]
+  F13: [fakultas kedokteran hewan, fkh, kedokteran hewan, dokter hewan]
+  F14: [fakultas ilmu komputer, filkom, fil kom, ilmu komputer, fakultas komputer, teknik informatika, informatika, teknik komputer, sistem informasi, teknologi informasi, pendidikan teknologi informasi]
+  F15: [fakultas kedokteran gigi, fkg, kedokteran gigi, dokter gigi]
+  F16: [fakultas vokasi, fv, vokasi, sekolah vokasi]
+  F17: [fakultas ilmu kesehatan, fikes, ilmu kesehatan, keperawatan, ilmu gizi, gizi]
+  F18: [sekolah pascasarjana, spub, pascasarjana, pasca sarjana]
+
+catatan_robot:
+  - Untuk jadwal, biaya terbaru, dan pengumuman resmi, arahkan pengunjung ke www.ub.ac.id atau selma.ub.ac.id.
+  - Telepon umum UB 0341-551611.
+  - Jika informasi tidak ada di knowledge base, katakan dengan jujur bahwa Bron belum punya informasinya.
+
+# ===========================================================================
+# SUMBER (diakses 5 Oktober 2026 kecuali disebut lain)
+# ===========================================================================
+sumber:
+  ub_stat: {judul: "Statistik UB (data per Juni 2025)", url: "https://www.ub.ac.id/id/about/ub-by-the-number/"}
+  ub_profil: {judul: "Profil Singkat UB", url: "https://www.ub.ac.id/id/about/brief-profile/"}
+  ub_sejarah: {judul: "Sejarah UB", url: "https://www.ub.ac.id/id/about/history/"}
+  ub_brand: {judul: "Lambang, Logo, Motto, dan Maskot", url: "https://www.ub.ac.id/id/about/ub-brand/"}
+  ub_visi: {judul: "Visi dan Misi UB", url: "https://www.ub.ac.id/id/about/vision-and-mission/"}
+  ub_akreditasi: {judul: "Akreditasi UB", url: "https://www.ub.ac.id/id/about/accreditation/"}
+  ub_prestasi: {judul: "Prestasi UB", url: "https://www.ub.ac.id/id/about/achievements/"}
+  ub_pejabat: {judul: "Pejabat Universitas", url: "https://www.ub.ac.id/id/about/organization/officials/"}
+  ub_admisi: {judul: "Seleksi Masuk UB", url: "https://www.ub.ac.id/id/academic/admission/"}
+  ub_beasiswa: {judul: "Beasiswa UB", url: "https://www.ub.ac.id/id/academic/scholarships/"}
+  ub_kesehatan: {judul: "Fasilitas Kesehatan UB", url: "https://www.ub.ac.id/id/campus-life/medical-facilities/"}
+  ub_fasum: {judul: "Fasilitas Umum UB", url: "https://www.ub.ac.id/id/campus-life/general-facilities/"}
+  ub_ukm: {judul: "Unit Aktivitas Mahasiswa UB", url: "https://www.ub.ac.id/id/campus-life/student-activity-unit/"}
+  ub_lib: {judul: "Perpustakaan UB", url: "https://lib.ub.ac.id/"}
+  ub_wisuda56: {judul: "Pelaksanaan Wisuda Periode V dan VI TA 2026/2027 (16 Sep 2026)", url: "https://www.ub.ac.id/en/pelaksanaan-wisuda-periode-v-dan-periode-vi-ta-2026-2027/"}
+  kalender_akademik: {judul: "Kalender Akademik DALA UB TA 2026/2027", url: "https://akademik.ub.ac.id/kalender-akademik/"}
+  mwa_rektor: {judul: "MWA UB: Prof. Widodo Rektor 2022-2027", url: "https://mwa.ub.ac.id/prof-widodo-ditetapkan-sebagai-rektor-ub-2/"}
+  prasetya_ptnbh: {judul: "Prasetya: UB Menjadi PTN Badan Hukum (27 Okt 2021)", url: "https://prasetya.ub.ac.id/universitas-brawijaya-menjadi-ptn-badan-hukum/"}
+  prasetya_qs2027: {judul: "Prasetya: UB Naik 64 Peringkat QS WUR 2027 (19 Jun 2026)", url: "https://prasetya.ub.ac.id/ub-naik-64-peringkat-dalam-qs-world-university-rankings-2027/"}
+  prasetya_theasia: {judul: "Prasetya: UB 601-800 THE Asia University Rankings 2026", url: "https://prasetya.ub.ac.id/perkuat-reputasi-di-asia-ub-tembus-peringkat-601-800-the-asia-university-rankings-2026/"}
+  prasetya_danaabadi: {judul: "Prasetya: UB Salurkan Beasiswa Dana Abadi Pertama (Agu 2025)", url: "https://prasetya.ub.ac.id/ub-salurkan-beasiswa-dana-abadi-pertama-untuk-50-mahasiswa/"}
+  topuni: {judul: "TopUniversities: Universitas Brawijaya", url: "https://www.topuniversities.com/universities/universitas-brawijaya"}
+  detik_rename: {judul: "detikEdu: UB Resmi Ubah Nama 4 Fakultas (12 Mei 2026)", url: "https://www.detik.com/edu/perguruan-tinggi/d-8486415/universitas-brawijaya-resmi-ubah-nama-4-fakultas-ini-daftar-nama-terbarunya"}
+  detik_ukt2026: {judul: "detikEdu: UKT Jalur Mandiri UB 2026 (12 Mei 2026)", url: "https://www.detik.com/edu/seleksi-masuk-pt/d-8485152/ukt-jalur-mandiri-universitas-brawijaya-2026-untuk-s1-d4-ini-rincian-per-prodi"}
+  kompas_ukt2026: {judul: "Kompas: Biaya Kuliah UB Jalur SNBP, SNBT, Mandiri 2026 (20 Nov 2025)", url: "https://www.kompas.com/edu/read/2025/11/20/135525871/biaya-kuliah-ub-semua-jurusan-jalur-snbp-snbt-mandiri-2026"}
+  selma_ipi: {judul: "SELMA UB: IPI 2026 (Per Rektor 123/2025)", url: "https://selma.ub.ac.id/ipi/"}
+  selma_ukt: {judul: "SELMA UB: UKT 2026 (Per Rektor 118/2025)", url: "https://selma.ub.ac.id/ukt/"}
+  kanal24_biss: {judul: "Kanal24: 2.349 Pendaftar BISS 2025", url: "https://kanal24.co.id/2-349-diterima-beasiswa-brawijaya-international-student-scholarship-2025/"}
+  web_aset981: {judul: "Direktorat Aset UB: total aset 981 hektare, 20% untuk perkuliahan", url: "https://aset.ub.ac.id/author/wibigiovani_0ns9wc35/page/3/"}
+  aset_kepanjen: {judul: "Aset UB: Gedung Vokasi Baru Dibangun di Kepanjen", url: "https://aset.ub.ac.id/gedung-vokasi-baru-ub-mulai-dibangun-di-kepanjen-pimpinan-universitas-turun-langsung-cek-progres/"}
+  malangtimes_dies63: {judul: "MalangTimes: UB di Usia ke-63 (5 Jan 2026)", url: "https://www.malangtimes.com/amp/baca/352522/20260105/070600/rektor-universitas-brawijaya-tegaskan-arah-transformasi-kampus-di-usia-ke-63"}
+  fh_home: {judul: "Fakultas Hukum UB", url: "https://hukum.ub.ac.id/"}
+  fh_pimpinan: {judul: "FH UB: Pimpinan Fakultas", url: "https://hukum.ub.ac.id/pimpinan-fakultas/"}
+  fh_sejarah: {judul: "FH UB: Sejarah", url: "https://hukum.ub.ac.id/sejarah/"}
+  feb_pimpinan: {judul: "FEB UB: Manajemen Fakultas", url: "https://feb.ub.ac.id/manajemen-fakultas/"}
+  feb_sejarah: {judul: "FEB UB: Sejarah", url: "https://feb.ub.ac.id/sejarah/"}
+  fia_home: {judul: "FIA UB", url: "https://fia.ub.ac.id/"}
+  fia_pimpinan: {judul: "FIA UB: Profil Pimpinan", url: "https://fia.ub.ac.id/profil/profil-pimpinan/"}
+  fia_dekanat2025: {judul: "FIA UB: Dekanat 2025-2030", url: "https://fia.ub.ac.id/en/dekanat-fia-ub-2025-2030/"}
+  fbipk_manajemen: {judul: "FBiPK UB: Manajemen", url: "https://fbipk.ub.ac.id/manajemen/"}
+  fbipk_kontak: {judul: "FBiPK UB: Narahubung & Lokasi", url: "https://fbipk.ub.ac.id/narahubung-lokasi/"}
+  fast_home: {judul: "FAST UB", url: "https://fast.ub.ac.id/"}
+  fast_struktur: {judul: "FAST UB: Struktur Organisasi", url: "https://fast.ub.ac.id/profil/struktur-organisasi/"}
+  fpik_home: {judul: "FPIK UB", url: "https://fpik.ub.ac.id/"}
+  fpik_pimpinan: {judul: "FPIK UB: Pimpinan Fakultas", url: "https://fpik.ub.ac.id/profil/pimpinan-fakultas/"}
+  fpik_dekan2025: {judul: "FPIK UB: Pelantikan Dekan 2025-2030 (Jun 2025)", url: "https://fpik.ub.ac.id/2025/06/inauguration-of-prof-dr-sc-asep-awaludin-prihanto-as-dean-of-ffms-ub-for-the-2025-2030/"}
+  fk_home: {judul: "FK UB", url: "https://fk.ub.ac.id/"}
+  fk_pimpinan: {judul: "FK UB: Profil Pimpinan", url: "https://fk.ub.ac.id/profil/profil-pimpinan/"}
+  ft_pimpinan: {judul: "FT UB: Pimpinan Fakultas", url: "https://teknik.ub.ac.id/id/profil/organisasi/pimpinan-fakultas/"}
+  ft_sejarah: {judul: "FT UB: Sejarah", url: "https://teknik.ub.ac.id/id/profil/sejarah/"}
+  stem_home: {judul: "FSTeM UB", url: "https://stem.ub.ac.id/"}
+  stem_manajemen: {judul: "FSTeM UB: Manajemen dan Organisasi", url: "https://stem.ub.ac.id/tentang-fakultas/manajemen-organisasi/"}
+  tab_home: {judul: "FTAB UB", url: "https://tab.ub.ac.id/"}
+  tab_pimpinan: {judul: "FTAB UB: Pimpinan", url: "https://tab.ub.ac.id/profil/struktur-organisasi/pimpinan/"}
+  fisip_home: {judul: "FISIP UB", url: "https://fisip.ub.ac.id/"}
+  fisip_dekanat: {judul: "FISIP UB: Dekanat", url: "https://fisip.ub.ac.id/profile/dekanat/"}
+  fib_home: {judul: "FIB UB", url: "https://fib.ub.ac.id/"}
+  fib_pimpinan: {judul: "FIB UB: Leaders", url: "https://fib.ub.ac.id/struktur-organisasi/46-2/"}
+  fkh_struktur: {judul: "FKH UB: Struktur Organisasi", url: "https://fkh.ub.ac.id/id/profile/struktur-organisasi/"}
+  fkh_kontak: {judul: "FKH UB: Kontak", url: "https://fkh.ub.ac.id/id/informasi/contact-2/"}
+  fkg_home: {judul: "FKG UB", url: "https://fkg.ub.ac.id/"}
+  fkg_pimpinan: {judul: "FKG UB: Pimpinan Fakultas", url: "https://fkg.ub.ac.id/pimpinan-fakultas-fkgub/"}
+  vokasi_home: {judul: "Fakultas Vokasi UB", url: "https://vokasi.ub.ac.id/"}
+  vokasi_pimpinan: {judul: "Vokasi UB: Pimpinan Fakultas", url: "https://vokasi.ub.ac.id/pimpinan-fakultas/"}
+  fikes_home: {judul: "FIKES UB", url: "https://fikes.ub.ac.id/"}
+  fikes_pimpinan: {judul: "FIKES UB: Pimpinan Fakultas", url: "https://fikes.ub.ac.id/id/pimpinan-fakultas/"}
+  spub_home: {judul: "Sekolah Pascasarjana UB", url: "https://spub.ub.ac.id/"}
+  spub_pimpinan: {judul: "SPUB: Pimpinan", url: "https://spub.ub.ac.id/sejarah/pimpinan/"}
+  filkom_home: {judul: "FILKOM UB", url: "https://filkom.ub.ac.id/"}
+  filkom_pimpinan: {judul: "FILKOM UB: Pimpinan Fakultas", url: "https://filkom.ub.ac.id/profil/pimpinan-fakultas/"}
+  filkom_struktur: {judul: "FILKOM UB: Struktur Organisasi (Per Rektor 43/2026)", url: "https://filkom.ub.ac.id/profil/struktur-organisasi/"}
+  filkom_prodi: {judul: "FILKOM UB: Departemen dan Program Studi", url: "https://filkom.ub.ac.id/departemen-dan-program-studi/"}
+  filkom_sejarah: {judul: "FILKOM UB: Sejarah", url: "https://filkom.ub.ac.id/profil/sejarah/"}
+  filkom_fasilitas: {judul: "FILKOM UB: Daftar Fasilitas", url: "https://filkom.ub.ac.id/layanan-fasilitas/daftar-fasilitas/"}
+  filkom_labs: {judul: "FILKOM UB: Laboratorium (lab-sc, lab-rpl, lab-res, lab-icn, lab-mgm, lab-si, lab-tel, lab-pembelajaran)", url: "https://filkom.ub.ac.id/lab-res/"}
+  filkom_nirc2025: {judul: "FILKOM UB Raih Gelar Juara di NIRC 2025 (6 Mar 2025)", url: "https://filkom.ub.ac.id/2025/03/06/filkom-ub-raih-gelar-juara-di-nirc-2025-padang/"}
+  filkom_workshop2024: {judul: "Workshop Pengembangan Teknologi Robot UB x Chukyo University (4 Sep 2024)", url: "https://filkom.ub.ac.id/2024/09/04/implementasi-kerjasama-luar-negeri-workshop-pengembangan-teknologi-robot-antara-ub-dan-chukyou-university-japan/"}
+  filkom_pitoyo2026: {judul: "FILKOM UB Sambut Prof. Pitoyo Hartono (4 Sep 2026)", url: "https://filkom.ub.ac.id/2026/09/04/filkom-ub-sambut-prof-pitoyo-hartono-bahas-riset-robotika-hingga-tren-karier-di-jepang/"}
+  tim_brone: {judul: "Konfirmasi tim BRONE (user, 5 Okt 2026) + kode brone-talk", url: ""}

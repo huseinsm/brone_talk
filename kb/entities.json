@@ -1,0 +1,246 @@
+{
+ "F01": {
+  "nama": "Fakultas Hukum",
+  "singkatan": "FH",
+  "alias": [
+   "fakultas hukum",
+   "fh",
+   "hukum",
+   "ilmu hukum",
+   "kenotariatan"
+  ]
+ },
+ "F02": {
+  "nama": "Fakultas Ekonomi dan Bisnis",
+  "singkatan": "FEB",
+  "alias": [
+   "akuntansi",
+   "ekonomi bisnis",
+   "ekonomi dan bisnis",
+   "ekonomi islam",
+   "ekonomi pembangunan",
+   "fakultas ekonomi",
+   "fakultas ekonomi dan bisnis",
+   "feb",
+   "kewirausahaan"
+  ]
+ },
+ "F03": {
+  "nama": "Fakultas Ilmu Administrasi",
+  "singkatan": "FIA",
+  "alias": [
+   "administrasi bisnis",
+   "administrasi publik",
+   "fakultas ilmu administrasi",
+   "fia",
+   "ilmu administrasi",
+   "ilmu perpustakaan",
+   "pariwisata",
+   "perpajakan"
+  ]
+ },
+ "F04": {
+  "nama": "Fakultas Bio-Industri Pertanian dan Kehutanan",
+  "singkatan": "FBiPK",
+  "alias": [
+   "agribisnis",
+   "agroekoteknologi",
+   "fakultas bio industri pertanian dan kehutanan",
+   "fakultas pertanian",
+   "fbipk",
+   "kehutanan",
+   "pertanian"
+  ]
+ },
+ "F05": {
+  "nama": "Fakultas Sains dan Teknologi Peternakan",
+  "singkatan": "FAST",
+  "alias": [
+   "fakultas peternakan",
+   "fakultas sains dan teknologi peternakan",
+   "fapet",
+   "fast",
+   "peternakan"
+  ]
+ },
+ "F06": {
+  "nama": "Fakultas Perikanan dan Ilmu Kelautan",
+  "singkatan": "FPIK",
+  "alias": [
+   "akuakultur",
+   "budidaya perairan",
+   "fakultas perikanan dan ilmu kelautan",
+   "fpik",
+   "ilmu kelautan",
+   "kelautan",
+   "perikanan"
+  ]
+ },
+ "F07": {
+  "nama": "Fakultas Kedokteran",
+  "singkatan": "FK",
+  "alias": [
+   "dokter",
+   "fakultas kedokteran",
+   "farmasi",
+   "fk",
+   "kebidanan",
+   "kedokteran"
+  ]
+ },
+ "F08": {
+  "nama": "Fakultas Teknik",
+  "singkatan": "FT",
+  "alias": [
+   "arsitektur",
+   "fakultas teknik",
+   "ft",
+   "perencanaan wilayah dan kota",
+   "teknik",
+   "teknik elektro",
+   "teknik industri",
+   "teknik kimia",
+   "teknik mesin",
+   "teknik pengairan",
+   "teknik sipil"
+  ]
+ },
+ "F09": {
+  "nama": "Fakultas Sains, Teknologi, dan Matematika",
+  "singkatan": "FSTeM",
+  "alias": [
+   "bioinformatika",
+   "biologi",
+   "f stem",
+   "fakultas matematika dan ilmu pengetahuan alam",
+   "fakultas mipa",
+   "fakultas sains teknologi dan matematika",
+   "fisika",
+   "fmipa",
+   "fstem",
+   "ilmu aktuaria",
+   "kimia",
+   "matematika",
+   "mipa",
+   "sains data",
+   "statistika",
+   "teknik geofisika"
+  ]
+ },
+ "F10": {
+  "nama": "Fakultas Teknologi Agroindustri dan Biosistem",
+  "singkatan": "FTAB",
+  "alias": [
+   "agroindustri",
+   "bioteknologi",
+   "fakultas teknologi agroindustri dan biosistem",
+   "fakultas teknologi pertanian",
+   "ftab",
+   "ftp",
+   "teknik lingkungan",
+   "teknik pertanian",
+   "teknologi industri pertanian",
+   "teknologi pangan",
+   "teknologi pertanian"
+  ]
+ },
+ "F11": {
+  "nama": "Fakultas Ilmu Sosial dan Ilmu Politik",
+  "singkatan": "FISIP",
+  "alias": [
+   "fakultas ilmu sosial dan ilmu politik",
+   "fisip",
+   "hubungan internasional",
+   "ilmu komunikasi",
+   "ilmu pemerintahan",
+   "ilmu politik",
+   "ilmu sosial",
+   "psikologi",
+   "sosiologi"
+  ]
+ },
+ "F12": {
+  "nama": "Fakultas Ilmu Budaya",
+  "singkatan": "FIB",
+  "alias": [
+   "antropologi",
+   "fakultas ilmu budaya",
+   "fib",
+   "ilmu budaya",
+   "pendidikan bahasa inggris",
+   "sastra cina",
+   "sastra inggris",
+   "sastra jepang",
+   "seni rupa murni"
+  ]
+ },
+ "F13": {
+  "nama": "Fakultas Kedokteran Hewan",
+  "singkatan": "FKH",
+  "alias": [
+   "dokter hewan",
+   "fakultas kedokteran hewan",
+   "fkh",
+   "kedokteran hewan"
+  ]
+ },
+ "F14": {
+  "nama": "Fakultas Ilmu Komputer",
+  "singkatan": "FILKOM",
+  "alias": [
+   "fakultas ilmu komputer",
+   "fakultas komputer",
+   "fil kom",
+   "filkom",
+   "ilmu komputer",
+   "informatika",
+   "pendidikan teknologi informasi",
+   "sistem informasi",
+   "teknik informatika",
+   "teknik komputer",
+   "teknologi informasi"
+  ]
+ },
+ "F15": {
+  "nama": "Fakultas Kedokteran Gigi",
+  "singkatan": "FKG",
+  "alias": [
+   "dokter gigi",
+   "fakultas kedokteran gigi",
+   "fkg",
+   "kedokteran gigi"
+  ]
+ },
+ "F16": {
+  "nama": "Fakultas Vokasi",
+  "singkatan": "FV",
+  "alias": [
+   "fakultas vokasi",
+   "fv",
+   "sekolah vokasi",
+   "vokasi"
+  ]
+ },
+ "F17": {
+  "nama": "Fakultas Ilmu Kesehatan",
+  "singkatan": "FIKES",
+  "alias": [
+   "fakultas ilmu kesehatan",
+   "fikes",
+   "gizi",
+   "ilmu gizi",
+   "ilmu kesehatan",
+   "keperawatan"
+  ]
+ },
+ "F18": {
+  "nama": "Sekolah Pascasarjana",
+  "singkatan": "SPUB",
+  "alias": [
+   "pasca sarjana",
+   "pascasarjana",
+   "sekolah pascasarjana",
+   "spub"
+  ]
+ }
+}
