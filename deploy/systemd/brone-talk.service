@@ -6,7 +6,7 @@
 Description=BRONE Talk (STT, jawaban FAQ/RAG/LLM, TTS) di Intel NUC
 Requires=brone-v4-embed.service brone-v4-rerank.service
 Wants=brone-v4-llm.service network-online.target
-After=brone-v4-embed.service brone-v4-rerank.service brone-v4-llm.service network-online.target sound.target
+After=brone-v4-embed.service brone-v4-rerank.service brone-v4-llm.service network-online.target sound.target pipewire.service wireplumber.service
 ConditionPathExists=%h/brone_talk/models/silero_vad.onnx
 ConditionPathExists=%h/brone_talk/models/voices/id_ID-news_tts-medium.onnx
 
@@ -41,6 +41,8 @@ Environment=BRONE_MODE=auto
 Environment=BRONE_CLOUD_TIMEOUT_SECONDS=5
 # Rahasia (BRONE_DEEPSEEK_API_KEY, BRONE_MAI_API_KEY) dibaca dari luar repo, chmod 600.
 EnvironmentFile=-%h/.config/brone-talk/brone.env
+# Pastikan mic XVF3800 tidak diam (sesi PipeWire macet setelah kartu dicabut-pasang). Tidak fatal.
+ExecStartPre=-%h/brone_talk/deploy/mic_check.sh
 ExecStart=%h/brone_talk/.venv/bin/brone-talk run
 Restart=on-failure
 RestartSec=5
