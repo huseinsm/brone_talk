@@ -20,7 +20,6 @@ from brone_talk.config import Settings
 from brone_talk.engine.answer import AnswerEngine, EngineConfig
 from brone_talk.nlu.wake import clock_answer, collapse_repeats, _NAME_RE
 from brone_talk.session import Decision, Session, decide
-from brone_talk.speaker_lock.lock import SpeakerLock
 from brone_talk.stt.filters import stt_garbage_reason, stt_strip_prompt_sentence
 from brone_talk.stt.transcriber import Transcriber
 from brone_talk.telemetry import Telemetry
@@ -73,10 +72,9 @@ class TalkService:
         self.telemetry = Telemetry(settings.mqtt)
         vad = SileroVad(settings.models_dir / "silero_vad.onnx")
         self.recorder = Recorder(settings.audio, self.telemetry, self.stop_event, vad,
-                                 self.runtime_dir, doa_enabled=settings.lock.enabled)
+                                 self.runtime_dir, doa_enabled=False)
         self.transcriber = Transcriber(settings.stt, settings.mai, self.telemetry)
         self.speaker = Speaker(settings.tts, settings.audio, self.telemetry, self.runtime_dir)
-        self.lock = SpeakerLock(self.telemetry, settings.lock)
         self.engine = AnswerEngine(engine_config(settings, self.runtime_dir))
         self.session = Session()
 
@@ -102,11 +100,12 @@ class TalkService:
     def _clear_conversation(self) -> None:
         self.engine.reset()
 
-    def _expire_lock(self, now: float | None = None) -> None:
-        if self.lock.expire_if_idle(now):
-            if self.session.awaiting_question:
-                self.session.expire()
-                self.telemetry.stage("idle", "standby", reason="lock_timeout")
+    def _expire_await(self, now: float | None = None) -> None:
+        """Jendela "Ya?" habis: pertanyaan berikutnya harus menyebut nama lagi."""
+        now = time.monotonic() if now is None else now
+        if self.session.awaiting_question and now - self.session.awaiting_since > self.settings.await_s:
+            self.session.expire()
+            self.telemetry.stage("idle", "standby", reason="await_timeout")
 
     # -- warmup -------------------------------------------------------------------
     def warmup(self) -> None:
@@ -114,7 +113,6 @@ class TalkService:
         self.telemetry.status("warming", "memuat VAD")
         self.recorder.vad.reset()
         self.telemetry.status("warming", "memuat sidik suara")
-        self.lock.load()
         self.telemetry.status("warming", "memuat faster-whisper")
         self.transcriber.load()
         self.telemetry.status("warming", f"memvalidasi TTS ({self.speaker.backend})")
@@ -156,20 +154,9 @@ class TalkService:
             time.sleep(1)
             return
         if capture is None:
-            self._expire_lock()
+            self._expire_await()
             return
-        # diukur dari awal ucapan: penanya yang mulai bicara sebelum batas waktu tetap terkunci
-        self._expire_lock(time.monotonic() - capture.duration_s)
-        verdict = None
-        if self.lock.active:
-            # dicek sebelum STT, jadi suara orang lain tidak memakan biaya STT
-            verdict = self.lock.check(capture)
-            if not verdict.accepted:
-                LOG.info("Bukan penanya yang dikunci (%s), diabaikan", verdict.reason)
-                self.telemetry.stage("lock", "rejected", reason=verdict.reason)
-                capture.path.unlink(missing_ok=True)
-                return
-            LOG.info("Suara penanya terkunci (%s)", verdict.reason)
+        self._expire_await(time.monotonic() - capture.duration_s)
         try:
             text = self.transcriber.transcribe(capture.path)
         except Exception as exc:
@@ -204,9 +191,8 @@ class TalkService:
             text = cleaned
             called = bool(_NAME_RE.search(text))
 
-        locked = self.lock.active
         awaiting = self.session.awaiting_question
-        outcome = decide(text, called=called, locked=locked, awaiting=awaiting)
+        outcome = decide(text, called=called, awaiting=awaiting)
 
         if outcome.decision is Decision.STOP:
             self.speaker.say(messages.SAY_STOP, "neutral")
@@ -219,15 +205,12 @@ class TalkService:
 
         if called:
             # setiap ucapan yang menyebut nama Bron dijawab; giliran baru mengosongkan riwayat
-            if not awaiting and not locked:
-                self._clear_conversation()
-            if not locked:
-                self.lock.engage(capture)
+            self._clear_conversation()
 
         if outcome.decision is Decision.CONFIRM:
             self.speaker.say(messages.SAY_CONFIRM, "happy")
-            self.lock.touch()
             self.session.awaiting_question = True
+            self.session.awaiting_since = time.monotonic()
             self.session.unclear_said = False
             self.telemetry.stage("idle", "awaiting_question", wake_text=text[:100])
             return
@@ -238,14 +221,11 @@ class TalkService:
             self.telemetry.stage("idle", "answering", follow_up_text=text[:100])
         question = outcome.question
         self.session.awaiting_question = False
-        if verdict is not None:
-            self.lock.accept(capture, verdict)
 
         clock = clock_answer(question)
         if clock:
             LOG.info("Jawaban jam sistem: %r -> %r", question[:80], clock)
             self.speaker.say(clock, "happy")
-            self.lock.touch()
             self.telemetry.stage("idle", "standby")
             return
 
@@ -254,7 +234,6 @@ class TalkService:
         except Exception:
             self.telemetry.status("error", "v4 tidak tersedia")
             self.speaker.say(messages.SAY_SERVICE_ERROR, "confused")
-            self.lock.touch()
             LOG.exception("Mesin jawaban gagal")
             self.telemetry.stage("idle", "standby")
             return
@@ -265,6 +244,4 @@ class TalkService:
             response = messages.SAY_FALLBACK
             expression = "confused"
         self.speaker.say(response, expression)
-        # batas waktu kunci dihitung dari akhir jawaban, bukan dari pertanyaan
-        self.lock.touch()
         self.telemetry.stage("idle", "standby")

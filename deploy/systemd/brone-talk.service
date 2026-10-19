@@ -23,8 +23,9 @@ Environment=BRONE_INPUT_ALSA_DEVICE=pipewire
 Environment=BRONE_INPUT_PIPEWIRE_NODE=brone-mic-xvf
 Environment="BRONE_INPUT_PIPEWIRE_NODES=Wireless microphone=brone-mic-wireless,XVF3800=brone-mic-xvf"
 Environment=BRONE_DOA_PIPEWIRE_NODE=brone-mic-raw4
-Environment=BRONE_LOCK=1
-Environment=BRONE_LOCK_TIMEOUT_SECONDS=15
+# Kunci penanya (sidik suara/arah) dinonaktifkan 19 Okt 2026. Jendela "Ya?" = BRONE_AWAIT_SECONDS.
+Environment=BRONE_LOCK=0
+Environment=BRONE_AWAIT_SECONDS=15
 Environment=BRONE_OUTPUT_DEVICE=default
 Environment=BRONE_PLAYBACK=1
 Environment=BRONE_MAX_UTTERANCE_SECONDS=8

@@ -10,6 +10,7 @@ from pathlib import Path
 
 from brone_talk import messages
 from brone_talk.app import TalkService
+from brone_talk.config import Settings
 from brone_talk.session import Session
 
 
@@ -49,36 +50,6 @@ class FakeSpeaker:
         return True
 
 
-class FakeVerdict:
-    def __init__(self, accepted, reason):
-        self.accepted = accepted
-        self.reason = reason
-
-
-class FakeLock:
-    def __init__(self):
-        self.active = False
-        self.engaged = 0
-        self.touched = 0
-
-    def engage(self, capture):
-        self.engaged += 1
-        self.active = True
-        return True
-
-    def touch(self, now=None):
-        self.touched += 1
-
-    def check(self, capture):
-        return FakeVerdict(accepted=True, reason="tes")
-
-    def accept(self, capture, verdict):
-        pass
-
-    def expire_if_idle(self, now=None):
-        return False
-
-
 class FakeEngine:
     def __init__(self):
         self.calls = []
@@ -114,11 +85,11 @@ class TurnFlowTest(unittest.TestCase):
         self._tmp = tempfile.TemporaryDirectory()
         self.dir = Path(self._tmp.name)
         self.svc = object.__new__(TalkService)  # lewati __init__ (butuh perangkat keras)
+        self.svc.settings = Settings.from_env({})
         self.svc.telemetry = FakeTelemetry()
         self.svc.recorder = FakeRecorder(self.dir)
         self.svc.transcriber = FakeTranscriber()
         self.svc.speaker = FakeSpeaker()
-        self.svc.lock = FakeLock()
         self.svc.engine = FakeEngine()
         self.svc.session = Session()
         self.svc.runtime_dir = self.dir
@@ -164,10 +135,21 @@ class TurnFlowTest(unittest.TestCase):
         self.assertEqual(self.svc.engine.calls, [])
         self.assertTrue(self.said()[0].startswith("Sekarang pukul "))
 
-    def test_lock_engages_on_wake_but_follow_up_without_name_is_ignored(self):
+    def test_follow_up_without_name_after_answer_is_ignored(self):
         self.hear("Brone, UB ada di mana?", "dan kalau FILKOM")
-        self.assertEqual(self.svc.lock.engaged, 1)
         self.assertEqual(self.svc.engine.calls, ["UB ada di mana?"])
+
+    def test_only_one_follow_up_answered_after_ya(self):
+        self.hear("Halo Brone", "berapa mahasiswa di UB", "dan fakultasnya berapa")
+        self.assertEqual(self.said(), [messages.SAY_CONFIRM, "JAWAB berapa mahasiswa di UB"])
+        self.assertEqual(self.svc.engine.calls, ["berapa mahasiswa di UB"])
+
+    def test_await_window_expires_and_ignores_later_question(self):
+        self.hear("Halo Brone")
+        self.svc.session.awaiting_since -= 60  # jendela sudah lewat
+        self.hear("berapa mahasiswa di UB")
+        self.assertEqual(self.svc.engine.calls, [])
+        self.assertEqual(self.said(), [messages.SAY_CONFIRM])
 
     def test_new_wake_clears_conversation_once(self):
         self.hear("Brone, UB ada di mana?")

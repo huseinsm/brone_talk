@@ -48,7 +48,7 @@ tidak dibawa ke sini; lihat `docs/decisions.md`.
 
 | Field | Default | Variabel env | Keterangan |
 |---|---|---|---|
-| `enabled` | `True` | `BRONE_LOCK` |  |
+| `enabled` | `False` | `BRONE_LOCK` | (dinonaktifkan 19 Okt 2026, lihat docs/decisions.md) |
 | `timeout_s` | `15.0` | `BRONE_LOCK_TIMEOUT_SECONDS` |  |
 | `voice_accept` | `0.45` | `BRONE_LOCK_VOICE_ACCEPT` |  |
 | `voice_reject` | `0.30` | `BRONE_LOCK_VOICE_REJECT` |  |

@@ -15,15 +15,19 @@ NUC. Kalau mau mengubahnya, ukur ulang di hardware yang sama dulu.
   double-NS merusak STT.
 - **Derau tidak diredam di kode.** `BRONE_NOISE_REDUCE` tetap default `0`.
 
-## Kunci penanya (12 Okt 2026)
+## Kunci penanya (dinonaktifkan 19 Okt 2026)
 
-- Sidik suara CAM++ (3D-Speaker, sherpa-onnx) dipilih dari benchmark dibanding ERes2NetV2 dan
-  WeSpeaker. Dari 24 ms per klip 3 detik, dan satu-satunya yang tetap memisahkan orang sama dan
-  beda untuk klip 1 detik seperti "Halo Brone".
-- Ambang sidik suara (0,30 tolak, 0,45 terima) diukur dari 3 pembicara. **Belum dikalibrasi ulang
-  dengan pengunjung asli.**
-- Arah SRP-PHAT dari 4 mic mentah. Arah dibandingkan relatif terhadap saat dikunci, jadi bingkai
-  array yang belum dikalibrasi tetap cukup.
+Kunci penanya (sidik suara CAM++ dan arah SRP-PHAT, 12 Okt 2026) **dinonaktifkan atas permintaan
+pengguna**. Pertanyaan lanjutan tanpa nama membuat robot menjawab suara orang lain yang kebetulan
+cocok dengan penanya sebelumnya, dan tidak sesuai harapan. Kode `speaker_lock/` masih ada tetapi
+tidak dipanggil (`BRONE_LOCK=0`, default kini nonaktif).
+
+## Panggilan dan jendela "Ya?"
+
+- Setiap pertanyaan harus memuat "Brone". Tidak ada lagi mode terkunci.
+- Hanya "Brone" tanpa pertanyaan: robot menjawab "Ya?". Ucapan berikutnya **satu kali** saja
+  dijawab tanpa nama, dalam jendela `BRONE_AWAIT_SECONDS` (15 detik). Setelah itu harus menyebut
+  "Brone" lagi.
 
 ## STT
 
@@ -63,8 +67,6 @@ NUC. Kalau mau mengubahnya, ukur ulang di hardware yang sama dulu.
 - **"Ya?" hanya sekali** per penantian. Ucapan tidak jelas saat menunggu juga hanya diminta diulang
   sekali per giliran, supaya derau tidak membuat robot terus bicara.
 - **Riwayat dibersihkan** setiap kali nama disebut di luar penantian.
-- **Kunci penanya tidak membuat pertanyaan tanpa nama dijawab** (diubah 19 Okt 2026 atas permintaan
-  pengguna). Pertanyaan tanpa nama hanya dijawab setelah "Ya?". Kunci tetap dipakai untuk menyaring suara.
 
 ## Yang dihapus dari versi lama
 

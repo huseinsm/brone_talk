@@ -74,7 +74,7 @@ class AudioConfig:
 
 @dataclass(frozen=True)
 class LockConfig:
-    enabled: bool = True  # BRONE_LOCK
+    enabled: bool = False  # BRONE_LOCK (dinonaktifkan 19 Okt 2026, lihat docs/decisions.md)
     timeout_s: float = 15.0  # BRONE_LOCK_TIMEOUT_SECONDS
     voice_accept: float = 0.45  # BRONE_LOCK_VOICE_ACCEPT
     voice_reject: float = 0.30  # BRONE_LOCK_VOICE_REJECT
@@ -165,6 +165,7 @@ class Settings:
     mai: MaiConfig = field(default_factory=MaiConfig)
     tts: TtsConfig = field(default_factory=TtsConfig)
     engine: EngineSettings = field(default_factory=EngineSettings)
+    await_s: float = 15.0  # BRONE_AWAIT_SECONDS: jendela pertanyaan lanjutan setelah "Ya?"
     warmup_llm: bool = True  # BRONE_WARMUP_LLM
     log_level: str = "INFO"  # BRONE_LOG_LEVEL
     runtime_dir: Path = ROOT / "runtime"
@@ -285,5 +286,6 @@ class Settings:
             tts=tts,
             engine=engine,
             warmup_llm=_flag(env, "BRONE_WARMUP_LLM", True),
+            await_s=_float(env, "BRONE_AWAIT_SECONDS", 15.0),
             log_level=_str(env, "BRONE_LOG_LEVEL", "INFO").upper(),
         )

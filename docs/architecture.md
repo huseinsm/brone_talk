@@ -6,8 +6,6 @@
 mic (PipeWire/ALSA)                                 [audio/capture.py]
   -> Silero VAD per 32 ms                           [audio/vad.py]
   -> endpointing: mulai saat ucapan, selesai setelah senyap [audio/endpointing.py]
-  -> arah suara dari 4 mic (bila XVF3800 tersambung) [audio/capture.py, speaker_lock/doa]
-  -> kunci penanya: sidik suara + arah              [speaker_lock/lock.py]
   -> STT: MAI-Transcribe-2 (cloud) atau whisper     [stt/transcriber.py]
   -> koreksi kata + filter sampah + strip prompt    [stt/corrections.py, stt/filters.py]
   -> keputusan: diam / jawab "Ya?" / jawab / stop   [session.py]
@@ -44,7 +42,7 @@ Tidak ada cache semantik: jawaban LLM tidak disimpan untuk dipakai ulang.
 |---|---|
 | `config.py` | semua variabel env, sekali baca, default = nilai produksi |
 | `app.py` | `TalkService`: wiring, warmup, loop `turn()` |
-| `session.py` | `decide()` murni: keputusan per ucapan; `Session`: state menunggu pertanyaan |
+| `session.py` | `decide()` murni: keputusan per ucapan; `Session`: state menunggu pertanyaan ("Ya?") |
 | `cli.py`, `__main__.py` | perintah `run`, `self-test`, `list-devices`, `mic-test`, `ask` |
 | `audio/` | perangkat, VAD, endpointing, perekaman |
 | `speaker_lock/` | kunci penanya (sidik suara CAM++ dan arah SRP-PHAT) |
@@ -63,7 +61,8 @@ IDLE --(nama + pertanyaan)----------------------> jawab -> IDLE
 IDLE --(nama saja)--> AWAITING --(ucapan valid)--> jawab -> IDLE
 AWAITING --(stop)--> IDLE ("Baik, Bron kembali standby.")
 AWAITING --(ucapan tidak jelas, sekali)--> tetap AWAITING
-ucapan tanpa nama HANYA dijawab di status AWAITING (kunci penanya tidak cukup); kunci habis setelah 15 s senyap
+AWAITING --(jendela habis)--> IDLE
+ucapan tanpa nama HANYA dijawab satu kali di status AWAITING, dalam BRONE_AWAIT_SECONDS (15 s)
 ```
 
 Kunci penanya (`speaker_lock/lock.py`) dibuat saat nama disebut, diperpanjang setiap kali ada
