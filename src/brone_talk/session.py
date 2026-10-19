@@ -3,8 +3,8 @@
 Aturan (dari brone_talk.py v4, BroneTalkService.run):
   - "Brone" disebut di mana pun dalam kalimat -> pertanyaannya dijawab langsung.
   - Hanya nama ("Brone", "Halo Brone") -> jawab "Ya?", lalu ucapan berikutnya dianggap pertanyaan.
-  - Sedang menunggu pertanyaan (atau kunci penanya aktif) -> ucapan tanpa nama tetap dijawab.
-  - Tidak disebut nama dan tidak sedang menunggu/terkunci -> diabaikan (standby).
+  - Sedang menunggu pertanyaan setelah "Ya?" -> ucapan berikutnya tanpa nama dijawab.
+  - Tidak disebut nama dan tidak sedang menunggu -> diabaikan (standby), walau kunci penanya aktif.
   - Kata stop saat menunggu pertanyaan -> kembali standby.
 
 decide() murni: tidak memanggil audio, LLM, atau MQTT. Efek samping ada di app.py.
@@ -48,7 +48,9 @@ class Session:
 def decide(text: str, *, called: bool, locked: bool, awaiting: bool) -> Outcome:
     if awaiting and matches(STOP_PATTERNS, text):
         return Outcome(Decision.STOP)
-    if not called and not awaiting and not locked:
+    # Tanpa nama, robot hanya menjawab bila sedang menunggu pertanyaan setelah "Ya?".
+    # Kunci penanya TIDAK membuat pertanyaan tanpa nama dijawab.
+    if not called and not awaiting:
         return Outcome(Decision.STANDBY)
     if called:
         question = wake_question(text)

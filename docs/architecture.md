@@ -63,7 +63,7 @@ IDLE --(nama + pertanyaan)----------------------> jawab -> IDLE
 IDLE --(nama saja)--> AWAITING --(ucapan valid)--> jawab -> IDLE
 AWAITING --(stop)--> IDLE ("Baik, Bron kembali standby.")
 AWAITING --(ucapan tidak jelas, sekali)--> tetap AWAITING
-kunci penanya aktif: ucapan tanpa nama tetap dijawab; habis 15 s senyap -> IDLE
+ucapan tanpa nama HANYA dijawab di status AWAITING (kunci penanya tidak cukup); kunci habis setelah 15 s senyap
 ```
 
 Kunci penanya (`speaker_lock/lock.py`) dibuat saat nama disebut, diperpanjang setiap kali ada

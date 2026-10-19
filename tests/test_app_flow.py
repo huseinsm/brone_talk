@@ -164,10 +164,10 @@ class TurnFlowTest(unittest.TestCase):
         self.assertEqual(self.svc.engine.calls, [])
         self.assertTrue(self.said()[0].startswith("Sekarang pukul "))
 
-    def test_lock_engages_on_wake_and_follow_up_is_answered_without_name(self):
+    def test_lock_engages_on_wake_but_follow_up_without_name_is_ignored(self):
         self.hear("Brone, UB ada di mana?", "dan kalau FILKOM")
         self.assertEqual(self.svc.lock.engaged, 1)
-        self.assertEqual(self.svc.engine.calls, ["UB ada di mana?", "dan kalau FILKOM"])
+        self.assertEqual(self.svc.engine.calls, ["UB ada di mana?"])
 
     def test_new_wake_clears_conversation_once(self):
         self.hear("Brone, UB ada di mana?")

@@ -22,9 +22,10 @@ class DecideTest(unittest.TestCase):
         self.assertEqual(out.question, "berapa mahasiswa di UB")
         self.assertFalse(out.wake)
 
-    def test_follow_up_while_locked_is_answered(self):
+    def test_follow_up_while_locked_without_name_is_ignored(self):
+        # kunci penanya aktif tidak cukup: tanpa nama dan tanpa "Ya?", diam
         out = decide("dan kalau di FILKOM", called=False, locked=True, awaiting=False)
-        self.assertEqual(out.decision, Decision.ANSWER)
+        self.assertEqual(out.decision, Decision.STANDBY)
 
     def test_unaddressed_speech_is_standby(self):
         out = decide("saya mau makan siang", called=False, locked=False, awaiting=False)

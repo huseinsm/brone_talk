@@ -62,7 +62,9 @@ NUC. Kalau mau mengubahnya, ukur ulang di hardware yang sama dulu.
   menjawab. "BRONE FILKOM" adalah nama proyek, bukan panggilan.
 - **"Ya?" hanya sekali** per penantian. Ucapan tidak jelas saat menunggu juga hanya diminta diulang
   sekali per giliran, supaya derau tidak membuat robot terus bicara.
-- **Riwayat dibersihkan** setiap kali nama disebut di luar penantian atau kunci.
+- **Riwayat dibersihkan** setiap kali nama disebut di luar penantian.
+- **Kunci penanya tidak membuat pertanyaan tanpa nama dijawab** (diubah 19 Okt 2026 atas permintaan
+  pengguna). Pertanyaan tanpa nama hanya dijawab setelah "Ya?". Kunci tetap dipakai untuk menyaring suara.
 
 ## Yang dihapus dari versi lama
 

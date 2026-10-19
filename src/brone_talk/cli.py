@@ -19,6 +19,7 @@ import sys
 import time
 from threading import Event
 
+import numpy as np
 import sounddevice as sd
 
 from brone_talk.app import TalkService, engine_config
@@ -87,11 +88,13 @@ def mic_test(settings: Settings, rounds: int) -> int:
             finally:
                 capture.path.unlink(missing_ok=True)
             stats = dict(transcriber.last_stats)
+            utt_rms = float(np.sqrt(np.mean(np.square(capture.audio)))) if capture.audio is not None else None
             row = {"ts": time.strftime("%Y-%m-%d %H:%M:%S"), "text": text,
                    "duration_s": round(capture.duration_s, 2), "peak_rms": round(capture.peak_rms, 4),
+                   "utt_rms": None if utt_rms is None else round(utt_rms, 4),
                    **{k: round(v, 4) if isinstance(v, float) else v for k, v in stats.items()}}
             ok = stats.get("stt_mean_prob", 0) >= min_mean and stats.get("stt_min_prob", 0) >= min_seg
-            print(f"  [{done + 1}] {text!r}\n      peak_rms={row['peak_rms']} stt_mean={row.get('stt_mean_prob')} "
+            print(f"  [{done + 1}] {text!r}\n      utt_rms={row['utt_rms']} peak_rms={row['peak_rms']} stt_mean={row.get('stt_mean_prob')} "
                   f"stt_min={row.get('stt_min_prob')} -> {'FAQ boleh' if ok else 'FAQ dilewati'}", flush=True)
             with out.open("a", encoding="utf-8") as fh:
                 fh.write(json.dumps(row, ensure_ascii=False) + "\n")
