@@ -1,0 +1,20 @@
+# Rahasia: jangan pernah masuk git
+*.env
+!.env.example
+
+# Model dan data hasil build (diunduh/dibangkitkan, bukan sumber)
+models/
+runtime/
+kb/chunks.jsonl.tmp
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# Backup manual: sudah digantikan git
+*.bak*
+*.backup*
+*.snap_*
