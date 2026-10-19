@@ -20,8 +20,10 @@ if [ ! -e models ]; then
   fi
 fi
 
+# Dipasang sebagai brone-talk-next.service: unit produksi brone-talk.service TIDAK disentuh.
+# Cutover (mengganti nama unit) dilakukan manual, lihat docs/deployment.md.
 mkdir -p runtime "$HOME/.config/systemd/user" "$HOME/.config/brone-talk"
-install -m 644 deploy/systemd/brone-talk.service "$HOME/.config/systemd/user/brone-talk.service"
+install -m 644 deploy/systemd/brone-talk.service "$HOME/.config/systemd/user/brone-talk-next.service"
 systemctl --user daemon-reload
 
 # EnvironmentFile menimpa Environment= di unit, jadi file ini HANYA berisi rahasia.
@@ -30,4 +32,4 @@ if [ ! -f "$HOME/.config/brone-talk/brone.env" ]; then
   printf 'BRONE_DEEPSEEK_API_KEY=\nBRONE_MAI_API_KEY=\n' > "$HOME/.config/brone-talk/brone.env"
   echo "Dibuat $HOME/.config/brone-talk/brone.env (isi kedua kunci, chmod 600)."
 fi
-echo "Terpasang. Belum dijalankan. Mulai dengan: systemctl --user start brone-talk"
+echo "Terpasang sebagai brone-talk-next (belum dijalankan). Uji: systemctl --user start brone-talk-next"

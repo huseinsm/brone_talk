@@ -47,9 +47,12 @@ Versi produksi dan repo baru tidak boleh jalan bersamaan (mic dan speaker satu).
 Jalankan repo baru sebagai layanan terpisah:
 
 ```bash
-systemctl --user start brone-talk
-journalctl --user -u brone-talk -f
+systemctl --user stop brone-talk brone-talk-v4     # pastikan mic dan speaker bebas
+systemctl --user start brone-talk-next
+journalctl --user -u brone-talk-next -f
 ```
+
+Unit uji bernama `brone-talk-next` supaya `brone-talk` (produksi) tidak berubah sebelum cutover.
 
 Periksa berurutan:
 
@@ -69,15 +72,15 @@ Bandingkan latensi dengan `~/brone-talk-v4/runtime/turns.jsonl` (rute, `total_ms
 
 Dilakukan hanya setelah smoke test lulus semua dan Anda setuju:
 
-1. `systemctl --user stop brone-talk` (repo baru) dan `systemctl --user disable brone-talk-v4`.
-2. Arsipkan unit lama: `mv ~/.config/systemd/user/brone-talk.service ~/.config/systemd/user/archive/`
-   (buat foldernya dulu). Unit baru sudah dipasang oleh `make install`.
+1. `systemctl --user stop brone-talk-next` dan `systemctl --user disable brone-talk-v4`.
+2. Arsipkan unit lama: `mkdir -p ~/.config/systemd/user/archive && mv ~/.config/systemd/user/brone-talk.service ~/.config/systemd/user/archive/`,
+   lalu `mv ~/.config/systemd/user/brone-talk-next.service ~/.config/systemd/user/brone-talk.service` dan `systemctl --user daemon-reload`.
 3. Perbarui `~/dion/brone_talk.sh` dan `~/bin/brone-pakai` agar menunjuk ke repo baru, atau pensiunkan.
 4. `systemctl --user enable brone-talk` bila ingin otomatis saat boot.
 5. `state_machine_node.py` tidak berubah: nama unit tetap.
 
-**Rollback:** `systemctl --user stop brone-talk`, lalu pulihkan unit arsip dan `systemctl --user
-enable --now brone-talk-v4` (atau `~/bin/brone-pakai v4`).
+**Rollback:** `systemctl --user stop brone-talk`, pulihkan unit arsip ke `brone-talk.service`,
+`daemon-reload`, lalu `systemctl --user enable --now brone-talk-v4` (atau `~/bin/brone-pakai v4`).
 
 ## Setelah cutover
 
