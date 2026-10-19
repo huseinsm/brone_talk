@@ -57,7 +57,7 @@ class AudioConfig:
     input_device: str = "reSpeaker XVF3800"  # BRONE_INPUT_DEVICE (jalur sounddevice)
     alsa_device: str = "pipewire"  # BRONE_INPUT_ALSA_DEVICE
     pw_node: str = "brone-mic-xvf"  # BRONE_INPUT_PIPEWIRE_NODE (cadangan)
-    pw_nodes: str = ""  # BRONE_INPUT_PIPEWIRE_NODES: "kartu=node,..." berurutan prioritas
+    pw_nodes: str = "Wireless microphone=brone-mic-wireless,XVF3800=brone-mic-xvf"  # BRONE_INPUT_PIPEWIRE_NODES: prioritas
     doa_node: str = "brone-mic-raw4"  # BRONE_DOA_PIPEWIRE_NODE
     doa_card: str = "XVF3800"  # BRONE_DOA_CARD
     output_device: str = "default"  # BRONE_OUTPUT_DEVICE

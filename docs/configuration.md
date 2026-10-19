@@ -28,7 +28,7 @@ tidak dibawa ke sini; lihat `docs/decisions.md`.
 | `input_device` | `"reSpeaker XVF3800"` | `BRONE_INPUT_DEVICE` | (jalur sounddevice) |
 | `alsa_device` | `"pipewire"` | `BRONE_INPUT_ALSA_DEVICE` |  |
 | `pw_node` | `"brone-mic-xvf"` | `BRONE_INPUT_PIPEWIRE_NODE` | (cadangan) |
-| `pw_nodes` | `""` | `BRONE_INPUT_PIPEWIRE_NODES` | : "kartu=node,..." berurutan prioritas |
+| `pw_nodes` | `"Wireless microphone=brone-mic-wireless,XVF3800=brone-mic-xvf"` | `BRONE_INPUT_PIPEWIRE_NODES` | : prioritas |
 | `doa_node` | `"brone-mic-raw4"` | `BRONE_DOA_PIPEWIRE_NODE` |  |
 | `doa_card` | `"XVF3800"` | `BRONE_DOA_CARD` |  |
 | `output_device` | `"default"` | `BRONE_OUTPUT_DEVICE` |  |

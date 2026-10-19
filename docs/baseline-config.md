@@ -1,3 +1,33 @@
+# Konfigurasi aktif (disimpan 19 Okt 2026, default repo)
+
+Ini konfigurasi yang dipakai `brone-talk.service` (repo `~/brone_talk`) dan sudah disetujui
+pengguna. Nilai ini juga menjadi **default di `config.py`** dan `deploy/systemd/brone-talk.service`.
+
+| Variabel | Nilai | Catatan |
+|---|---|---|
+| BRONE_MODE | auto | cloud DeepSeek, lalu LFM2.5 lokal |
+| BRONE_CLOUD_TIMEOUT_SECONDS | 5 | |
+| BRONE_STT_BACKEND | mai | MAI-Transcribe-2, cadangan whisper |
+| BRONE_WHISPER_MODEL | models/faster-whisper-small | |
+| BRONE_WHISPER_BEAM | 5 | |
+| BRONE_STT_NO_SPEECH / BRONE_STT_LOGPROB | 0.4 / -1.0 | |
+| BRONE_MAI_PROVIDER / ENDPOINT | voicelive / japanwest | |
+| BRONE_MAI_TIMEOUT_SECONDS / COOLDOWN | 3.5 / 30 | |
+| BRONE_AUDIO_INPUT_BACKEND | alsa | |
+| BRONE_INPUT_ALSA_DEVICE | pipewire | |
+| BRONE_INPUT_PIPEWIRE_NODE | brone-mic-xvf | channel 0 olahan chip (dipilih 19 Okt 2026) |
+| BRONE_INPUT_PIPEWIRE_NODES | Wireless microphone=brone-mic-wireless,XVF3800=brone-mic-xvf | prioritas mic |
+| BRONE_DOA_PIPEWIRE_NODE | brone-mic-raw4 | tidak dipakai saat kunci nonaktif |
+| BRONE_MAX_UTTERANCE_SECONDS | 8 | |
+| BRONE_LOCK | 0 | kunci penanya dinonaktifkan |
+| BRONE_AWAIT_SECONDS | 15 | jendela satu pertanyaan setelah "Ya?" |
+| BRONE_OUTPUT_DEVICE / BRONE_PLAYBACK | default / 1 | |
+| BRONE_MQTT_BROKER / PORT | 192.168.100.2 / 1883 | |
+
+Rahasia (BRONE_DEEPSEEK_API_KEY, BRONE_MAI_API_KEY) tetap di `~/.config/brone-talk/brone.env`.
+
+---
+
 # Konfigurasi efektif produksi (baseline Fase 0)
 
 Diambil dari `systemctl --user show brone-talk-v4.service` pada 19 Okt 2026, lalu
