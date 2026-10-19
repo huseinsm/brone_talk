@@ -3,8 +3,8 @@
 !.env.example
 
 # Model dan data hasil build (diunduh/dibangkitkan, bukan sumber)
-models/
-runtime/
+models
+runtime
 kb/chunks.jsonl.tmp
 
 # Python

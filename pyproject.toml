@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "brone-talk"
+version = "0.2.0"
+description = "BRONE Talk: pipeline percakapan suara robot (wake word, STT, jawaban FAQ/RAG/LLM, TTS, MQTT)"
+readme = "README.md"
+requires-python = ">=3.12"
+# Versi dikunci sama dengan requirements-nuc.txt versi produksi (lihat docs/baseline-config.md).
+dependencies = [
+  "faster-whisper==1.2.1",
+  "numpy==1.26.4",
+  "onnxruntime==1.19.2",
+  "paho-mqtt==2.1.0",
+  "piper-tts>=1.2,<2",
+  "scipy==1.15.3",
+  "sherpa-onnx==1.13.8",
+  "sounddevice==0.5.3",
+  "websockets==17.1",
+]
+
+[project.scripts]
+brone-talk = "brone_talk.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

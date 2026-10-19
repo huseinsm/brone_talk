@@ -1,6 +1,7 @@
-# Fixture golden (baseline Fase 0)
+# Fixture golden
 
-Dibangkitkan oleh `scripts/make_golden.py` dari kode v4 di `~/brone-talk-v4`. Hasilnya di `tests/golden/`.
+Dibangkitkan oleh `scripts/make_golden.py` dari kode v4 lama (`~/brone-talk-v4`). Hasilnya di
+`tests/golden/`, dan **tidak di-commit** karena berisi transkrip STT asli dari mikrofon robot.
 
 | File | Isi | Jumlah |
 |---|---|---|
@@ -11,8 +12,9 @@ Dibangkitkan oleh `scripts/make_golden.py` dari kode v4 di `~/brone-talk-v4`. Ha
 
 ## Keterbatasan yang sudah diketahui
 
-- **stt_filters.garbage_reason kosong untuk semua baris.** Fixture dibuat tanpa `stats` dan `vocab`, sehingga filter hampir tidak aktif. Fixture ini belum cukup sebagai bukti; Fase 1 harus merekam ulang dengan stats/vocab yang sama seperti di produksi.
-- **Satu mismatch FAQ di baseline:**
-siapa dekan fakultas mipa | expect faq:dekan-fstem | got None tolak_mode_faq
-- Rute dicatat dengan BRONE_MODE=faq, jadi jalur LLM (DeepSeek, LFM2.5) tidak tercakup. Teks LLM tidak dibandingkan.
-- engine_routes bergantung pada server bge-m3 (8082) dan reranker (8083) yang hidup saat merekam.
+- **stt_filters.garbage_reason kosong untuk semua baris.** Fixture dibuat tanpa `stats` dan `vocab`,
+  sehingga filter hampir tidak aktif. Fixture ini belum cukup sebagai bukti filter sampah.
+- **Satu mismatch FAQ di baseline:** "siapa dekan fakultas mipa" diharapkan `faq:dekan-fstem`, tetapi
+  tidak cocok dengan FAQ mana pun. Ini sudah ada di versi lama dan tidak diperbaiki di sini.
+- Rute dicatat dengan `BRONE_MODE=faq`, jadi jalur LLM tidak tercakup.
+- `engine_routes` bergantung pada server bge-m3 (8082) dan reranker (8083) yang hidup saat merekam.

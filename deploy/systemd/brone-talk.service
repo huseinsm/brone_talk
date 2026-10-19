@@ -1,0 +1,50 @@
+# Unit systemd --user untuk BRONE Talk di Intel NUC.
+# Pasang lewat deploy/install.sh (tidak diaktifkan otomatis). Setelah dipasang:
+#   systemctl --user start brone-talk     # jalankan
+#   journalctl --user -u brone-talk -f    # ikuti log
+[Unit]
+Description=BRONE Talk (STT, jawaban FAQ/RAG/LLM, TTS) di Intel NUC
+Requires=brone-v4-embed.service brone-v4-rerank.service
+Wants=brone-v4-llm.service network-online.target
+After=brone-v4-embed.service brone-v4-rerank.service brone-v4-llm.service network-online.target sound.target
+ConditionPathExists=%h/brone_talk/models/silero_vad.onnx
+ConditionPathExists=%h/brone_talk/models/voices/id_ID-news_tts-medium.onnx
+
+[Service]
+Type=simple
+WorkingDirectory=%h/brone_talk
+Environment=PYTHONUNBUFFERED=1
+# Nilai produksi (docs/baseline-config.md). Override di sini, rahasia di EnvironmentFile.
+Environment=BRONE_MQTT_BROKER=192.168.100.2
+Environment=BRONE_MQTT_PORT=1883
+Environment="BRONE_INPUT_DEVICE=reSpeaker XVF3800"
+Environment=BRONE_AUDIO_INPUT_BACKEND=alsa
+Environment=BRONE_INPUT_ALSA_DEVICE=pipewire
+Environment=BRONE_INPUT_PIPEWIRE_NODE=brone-mic-xvf
+Environment="BRONE_INPUT_PIPEWIRE_NODES=Wireless microphone=brone-mic-wireless,XVF3800=brone-mic-xvf"
+Environment=BRONE_DOA_PIPEWIRE_NODE=brone-mic-raw4
+Environment=BRONE_LOCK=1
+Environment=BRONE_LOCK_TIMEOUT_SECONDS=15
+Environment=BRONE_OUTPUT_DEVICE=default
+Environment=BRONE_PLAYBACK=1
+Environment=BRONE_MAX_UTTERANCE_SECONDS=8
+Environment=BRONE_STT_BACKEND=mai
+Environment=BRONE_WHISPER_MODEL=%h/brone_talk/models/faster-whisper-small
+Environment=BRONE_WHISPER_BEAM=5
+Environment=BRONE_STT_NO_SPEECH=0.4
+Environment=BRONE_STT_LOGPROB=-1.0
+Environment=BRONE_MAI_PROVIDER=voicelive
+Environment=BRONE_MAI_ENDPOINT=https://japanwest.api.cognitive.microsoft.com
+Environment=BRONE_MAI_TIMEOUT_SECONDS=3.5
+Environment=BRONE_MAI_COOLDOWN_SECONDS=30
+Environment=BRONE_MODE=auto
+Environment=BRONE_CLOUD_TIMEOUT_SECONDS=5
+# Rahasia (BRONE_DEEPSEEK_API_KEY, BRONE_MAI_API_KEY) dibaca dari luar repo, chmod 600.
+EnvironmentFile=-%h/.config/brone-talk/brone.env
+ExecStart=%h/brone_talk/.venv/bin/brone-talk run
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=10
+
+[Install]
+WantedBy=default.target
