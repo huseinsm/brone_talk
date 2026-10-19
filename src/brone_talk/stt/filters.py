@@ -98,3 +98,16 @@ def stt_strip_prompt_sentence(text):
     rest = re.sub(r"\s{2,}", " ", _PROMPT_SENTENCE_ECHO.sub(" ", text)).strip(" ,.;")
     return rest if _stt_tokens(rest) else ""
 
+
+def stt_vocab(*texts):
+    return {t for text in texts for t in _stt_tokens(text or "") if len(t) > 1}
+
+
+def stt_prompt_terms(prompt, hotwords):
+    """Istilah daftar prompt/hotwords Whisper (per koma), tanpa nama robot."""
+    terms = set()
+    for part in re.split(r"[,.;:]", f"{prompt or ''},{hotwords or ''}"):
+        norm = _stt_chunk_norm(part)
+        if norm and len(norm.split()) <= 8:
+            terms.add(norm)
+    return frozenset(terms - {"brone", "bron", "istilah"})

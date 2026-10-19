@@ -8,12 +8,12 @@ import re
 import time
 import urllib.error
 import urllib.request
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 
-from brone_talk.engine.util import _env, _env_f, _env_i, norm_text, wait_for_server
+from brone_talk.engine.util import norm_text, wait_for_server
 from brone_talk.engine.servers import Embedder, Reranker
 from brone_talk.engine.entities import EntityMatcher
 from brone_talk.engine.faq import FaqIndex
@@ -31,31 +31,31 @@ _MOTION_QUESTION_RE = re.compile(r"\b(bisa|dapat|mampu|apakah|kah)\b", re.I)
 class EngineConfig:
     kb_dir: Path
     runtime_dir: Path
-    embed_url: str = field(default_factory=lambda: _env("BRONE_EMBED_URL", "http://127.0.0.1:8082"))
-    rerank_url: str = field(default_factory=lambda: _env("BRONE_RERANK_URL", "http://127.0.0.1:8083"))
-    local_url: str = field(default_factory=lambda: _env("BRONE_LOCAL_URL", "http://127.0.0.1:8081"))
-    local_model: str = field(default_factory=lambda: _env("BRONE_LOCAL_MODEL", "lfm2.5-2.6b"))
-    cloud_url: str = field(default_factory=lambda: _env("BRONE_DEEPSEEK_URL", "https://api.deepseek.com/chat/completions"))
-    cloud_model: str = field(default_factory=lambda: _env("BRONE_DEEPSEEK_MODEL", "deepseek-flash"))
-    cloud_key: str = field(default_factory=lambda: _env("BRONE_DEEPSEEK_API_KEY", ""))
-    mode: str = field(default_factory=lambda: _env("BRONE_MODE", "auto").lower())   # auto|cloud|local|faq
-    cloud_timeout_s: float = field(default_factory=lambda: _env_f("BRONE_CLOUD_TIMEOUT_SECONDS", 8.0))
-    local_timeout_s: float = field(default_factory=lambda: _env_f("BRONE_LOCAL_TIMEOUT_SECONDS", 25.0))
-    max_tokens: int = field(default_factory=lambda: _env_i("BRONE_LLM_MAX_TOKENS", 160))
-    faq_min_sim: float = field(default_factory=lambda: _env_f("BRONE_FAQ_MIN_SIM", 0.80))
-    faq_min_margin: float = field(default_factory=lambda: _env_f("BRONE_FAQ_MIN_MARGIN", 0.0))
-    stt_min_mean: float = field(default_factory=lambda: _env_f("BRONE_FAQ_STT_MIN_MEAN", 0.50))
-    stt_min_seg: float = field(default_factory=lambda: _env_f("BRONE_FAQ_STT_MIN_SEG", 0.40))
+    embed_url: str = "http://127.0.0.1:8082"
+    rerank_url: str = "http://127.0.0.1:8083"
+    local_url: str = "http://127.0.0.1:8081"
+    local_model: str = "lfm2.5-2.6b"
+    cloud_url: str = "https://api.deepseek.com/chat/completions"
+    cloud_model: str = "deepseek-flash"
+    cloud_key: str = ""
+    mode: str = "auto"  # auto | cloud | local | faq (diisi dari config.py)
+    cloud_timeout_s: float = 5.0  # nilai produksi (lihat docs/baseline-config.md)
+    local_timeout_s: float = 25.0
+    max_tokens: int = 160
+    faq_min_sim: float = 0.80
+    faq_min_margin: float = 0.0
+    stt_min_mean: float = 0.50
+    stt_min_seg: float = 0.40
     # STT kurang yakin -> FAQ tetap boleh, asal kemiripannya setinggi ini (lihat AnswerEngine.answer).
-    faq_low_stt_min_sim: float = field(default_factory=lambda: _env_f("BRONE_FAQ_LOW_STT_MIN_SIM", 0.90))
-    rerank_min: float = field(default_factory=lambda: _env_f("BRONE_RERANK_MIN", 0.30))
-    rerank_top: int = field(default_factory=lambda: _env_i("BRONE_RERANK_TOP", 8))
-    rerank_doc_chars: int = field(default_factory=lambda: _env_i("BRONE_RERANK_DOC_CHARS", 700))
-    rerank_timeout_s: float = field(default_factory=lambda: _env_f("BRONE_RERANK_TIMEOUT_SECONDS", 10.0))
-    context_chars: int = field(default_factory=lambda: _env_i("BRONE_CONTEXT_CHARS", 1400))
-    context_chunks: int = field(default_factory=lambda: _env_i("BRONE_CONTEXT_CHUNKS", 4))
-    grounding: bool = field(default_factory=lambda: _env("BRONE_GROUNDING", "1") not in ("0", "false", "no"))
-    startup_wait_s: float = field(default_factory=lambda: _env_f("BRONE_SERVER_WAIT_SECONDS", 120.0))
+    faq_low_stt_min_sim: float = 0.90
+    rerank_min: float = 0.30
+    rerank_top: int = 8
+    rerank_doc_chars: int = 700
+    rerank_timeout_s: float = 10.0
+    context_chars: int = 1400
+    context_chunks: int = 4
+    grounding: bool = True
+    startup_wait_s: float = 120.0
 
 class AnswerEngine:
     def __init__(self, cfg: EngineConfig) -> None:
