@@ -1,10 +1,12 @@
-"""util: bagian mesin jawaban v4 (dipindah dari brone_v4.py tanpa perubahan logika)."""
+"""Utilitas bersama mesin jawaban: normalisasi teks, HTTP JSON, dan tunggu server siap.
+
+Dipindah dari brone_v4.py tanpa perubahan logika (helper env dipindah ke config.py).
+"""
 
 from __future__ import annotations
 
 import json
 import logging
-import os
 import re
 import time
 import urllib.error
@@ -14,20 +16,8 @@ from typing import Any
 
 LOG = logging.getLogger("brone-talk.v4")
 
-def _env(name: str, default: str) -> str:
-    return os.getenv(name, default).strip()
 
-def _env_f(name: str, default: float) -> float:
-    try:
-        return float(os.getenv(name, str(default)))
-    except ValueError:
-        return default
 
-def _env_i(name: str, default: int) -> int:
-    try:
-        return int(os.getenv(name, str(default)))
-    except ValueError:
-        return default
 
 def norm_text(text: str) -> str:
     """Huruf kecil, tanpa tanda baca. Harus sama dengan kb/build_kb.py:norm_text."""

@@ -86,7 +86,7 @@ PRONOUNCE_MAP.update({
     "world": "worlt",
     "news": "nyus",
     "antaranews": "antaranyus",
-    # Moto UB (bagian 1 knowledge.txt): "Building Up Noble Future".
+    # Moto UB (bagian 1 knowledge base): "Building Up Noble Future".
     "Building Up Noble Future": "bilding ap,,, noubel fyucer",
 })
 
@@ -152,7 +152,7 @@ def apply_website_pronunciation(text: str) -> tuple[str, dict[str, str]]:
 # ─── Normalisasi singkatan & angka untuk TTS ─────────────────────────────
 # System prompt sudah menyuruh LLM menulis kata lengkap dan memberi penanda
 # ("nomor", "telepon", "kode pos") di depan angka -- tapi model 0.8B tetap
-# bisa bocor ("Jl. Veteran", "No. 12"), dan knowledge.txt memuat singkatan
+# bisa bocor ("Jl. Veteran", "No. 12"), dan knowledge base memuat singkatan
 # yang bisa tersalin. Lapisan ini deterministik: singkatan diperluas, lalu
 # angka yang BUKAN besaran (telepon, kode pos, nomor rumah/surat, RT/RW,
 # NIM/NIK) dieja per digit dengan 0 = "kosong". Tahun, jumlah, harga, umur
