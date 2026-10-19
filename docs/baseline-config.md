@@ -39,12 +39,10 @@ refactor: perilaku repo baru harus sama dengan tabel ini, kecuali yang dicatat d
 ## Variabel tidak berpengaruh pada v4 (warisan)
 
 BRONE_RAG_MODE, BRONE_EMBED_MODEL, BRONE_OLLAMA_URL, BRONE_LLM_MODEL,
-BRONE_OLLAMA_NUM_THREAD, BRONE_LLM_TIMEOUT_SECONDS, BRONE_CLOUD_TIMEOUT_SECONDS
-(v4 pakai BRONE_CLOUD_TIMEOUT_SECONDS=8 dari kode bila tidak di-set; unit set 5 dan dibaca
-oleh v4 juga, jadi nilai 5 yang berlaku), BRONE_KB_HEAD_CHARS, BRONE_LLM_OFFLINE_FALLBACK,
+BRONE_OLLAMA_NUM_THREAD, BRONE_LLM_TIMEOUT_SECONDS, BRONE_KB_HEAD_CHARS, BRONE_LLM_OFFLINE_FALLBACK,
 BRONE_CLOUD_RETRY_SECONDS.
 
-Catatan: BRONE_CLOUD_TIMEOUT_SECONDS=5 di unit berlaku untuk v4 (dibaca `EngineConfig`).
+Catatan: BRONE_CLOUD_TIMEOUT_SECONDS=5 di unit berlaku untuk v4 (dibaca `EngineConfig`; default kode 8).
 
 ## Endpoint llama.cpp (dipakai v4)
 

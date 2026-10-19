@@ -18,3 +18,7 @@ __pycache__/
 *.bak*
 *.backup*
 *.snap_*
+
+# Fixture golden berisi transkrip STT asli (data pribadi): tidak di-commit.
+# Bangkitkan ulang dengan scripts/make_golden.py.
+tests/golden/
