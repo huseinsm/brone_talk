@@ -16,13 +16,33 @@ dependencies = [
   "paho-mqtt==2.1.0",
   "piper-tts>=1.2,<2",
   "scipy==1.15.3",
-  "sherpa-onnx==1.13.8",
   "sounddevice==0.5.3",
   "websockets==17.1",
 ]
+
+[project.optional-dependencies]
+dev = ["ruff>=0.6"]
 
 [project.scripts]
 brone-talk = "brone_talk.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "C90"]
+ignore = ["B905"]  # zip() tanpa strict=: panjang input memang sama di semua pemanggil
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.lint.per-file-ignores]
+# teks prompt, regex, dan keluaran CLI lebih mudah dibaca utuh dalam satu baris
+"src/brone_talk/engine/llm.py" = ["E501"]
+"src/brone_talk/tts/normalize.py" = ["E501"]
+"src/brone_talk/cli.py" = ["E501"]
+"tests/*" = ["E501"]

@@ -1,7 +1,7 @@
 """Layanan BRONE Talk: wiring komponen, warmup, dan loop percakapan.
 
-Urutan per ucapan (sama dengan brone_talk.py v4):
-  rekam -> kunci penanya -> STT -> filter sampah -> keputusan (session.decide)
+Urutan per ucapan:
+  rekam -> STT -> panggilan (nama di awal/akhir) -> filter sampah -> keputusan (session.decide)
   -> jawaban jam (tanpa LLM) atau mesin jawaban -> TTS.
 """
 
@@ -18,12 +18,12 @@ from brone_talk.audio.capture import Recorder
 from brone_talk.audio.vad import SileroVad
 from brone_talk.config import Settings
 from brone_talk.engine.answer import AnswerEngine, EngineConfig
-from brone_talk.nlu.wake import call_text, clock_answer, collapse_repeats, _NAME_RE
-from brone_talk.session import Decision, Session, decide
+from brone_talk.nlu.wake import NAME_RE, call_text, clock_answer, collapse_repeats
+from brone_talk.session import Decision, Outcome, Session, decide
 from brone_talk.stt.filters import stt_garbage_reason, stt_strip_prompt_sentence
 from brone_talk.stt.transcriber import Transcriber
 from brone_talk.telemetry import Telemetry
-from brone_talk.text import _stt_tokens
+from brone_talk.text import stt_tokens
 from brone_talk.tts.speaker import Speaker
 
 LOG = logging.getLogger("brone-talk")
@@ -74,8 +74,7 @@ class TalkService:
         self.stop_event = Event()
         self.telemetry = Telemetry(settings.mqtt)
         vad = SileroVad(settings.models_dir / "silero_vad.onnx")
-        self.recorder = Recorder(settings.audio, self.telemetry, self.stop_event, vad,
-                                 self.runtime_dir, doa_enabled=False)
+        self.recorder = Recorder(settings.audio, self.telemetry, self.stop_event, vad, self.runtime_dir)
         self.transcriber = Transcriber(settings.stt, settings.mai, self.telemetry)
         self.speaker = Speaker(settings.tts, settings.audio, self.telemetry, self.runtime_dir)
         self.engine = AnswerEngine(engine_config(settings, self.runtime_dir))
@@ -91,7 +90,7 @@ class TalkService:
         if missing:
             raise RuntimeError(f"Aset model wajib belum ada: {', '.join(missing)}")
 
-    # -- jawaban (pembungkus mesin v4 yang juga mengirim telemetri LLM) ------------
+    # -- jawaban (pembungkus mesin jawaban yang juga mengirim telemetri LLM) --------
     def _answer(self, text: str, replying_to: str = "") -> dict[str, Any]:
         self.telemetry.stage("llm", "start", model=ENGINE_LABEL, backend="v4")
         result = self.engine.answer(text, self.transcriber.last_stats, replying_to=replying_to)
@@ -106,8 +105,8 @@ class TalkService:
     def _expire_await(self, now: float | None = None) -> None:
         """Jendela "Ya?" habis: pertanyaan berikutnya harus menyebut nama lagi."""
         now = time.monotonic() if now is None else now
-        if self.session.awaiting_question and now - self.session.awaiting_since > (self.session.await_window or self.settings.await_s):
-            self.session.expire()
+        if self.session.expired(now, self.settings.await_s):
+            self.session.end_wait()
             self.telemetry.stage("idle", "standby", reason="await_timeout")
 
     # -- warmup -------------------------------------------------------------------
@@ -115,16 +114,15 @@ class TalkService:
         started = time.perf_counter()
         self.telemetry.status("warming", "memuat VAD")
         self.recorder.vad.reset()
-        self.telemetry.status("warming", "memuat sidik suara")
         self.telemetry.status("warming", "memuat faster-whisper")
         self.transcriber.load()
         self.telemetry.status("warming", f"memvalidasi TTS ({self.speaker.backend})")
         path, _ms, _duration = self.speaker.synthesize("Halo.")
         path.unlink(missing_ok=True)
-        self.telemetry.status("warming", "memuat FAQ dan RAG v4 (llama.cpp)")
+        self.telemetry.status("warming", "memuat FAQ dan RAG (llama.cpp)")
         self.engine.start()
         if self.settings.warmup_llm:
-            self.telemetry.status("warming", "memvalidasi v4")
+            self.telemetry.status("warming", "memvalidasi mesin jawaban")
             # "Halo Bron" menyentuh FAQ sapaan (tanpa LLM). prev_question tidak di-reset, sama seperti produksi.
             self.engine.answer("Halo Bron", None)
         elapsed = time.perf_counter() - started
@@ -149,86 +147,98 @@ class TalkService:
 
     def turn(self) -> None:
         """Satu giliran: satu ucapan dari mic sampai jawaban diucapkan (atau diabaikan)."""
+        heard = self._hear()
+        if heard is None:
+            return
+        text, called = heard
+        outcome = decide(text, called=called, awaiting=self.session.awaiting_question)
+
+        if outcome.decision is Decision.STOP:
+            self.speaker.say(messages.SAY_STOP, "neutral")
+            self.session.end_wait()
+            self.telemetry.stage("idle", "standby", reason="voice_stop")
+            return
+        if outcome.decision is Decision.STANDBY:
+            self.telemetry.stage("idle", "standby", heard=text[:100])
+            return
+        if called:
+            # setiap ucapan yang memanggil Bron (nama di awal/akhir) dijawab; giliran baru mengosongkan riwayat
+            self._clear_conversation()
+        if outcome.decision is Decision.CONFIRM:
+            self._confirm(text)
+        else:
+            self._reply(outcome, text)
+
+    # -- dengar: rekam -> STT -> panggilan -> filter sampah ---------------------------
+    def _hear(self) -> tuple[str, bool] | None:
+        """(teks, dipanggil) dari satu ucapan, atau None bila tidak ada yang perlu diputuskan."""
+        text = self._record_and_transcribe()
+        if not text:
+            return None
+        if NAME_RE.search(text):
+            text = collapse_repeats(text)
+        text, called = self._addressing(text)
+        stt = self.transcriber
+        if not stt.filter_enabled:
+            return text, called
+        reason = stt_garbage_reason(text, stt.last_stats, stt.vocab, stt.prompt_terms)
+        if reason:
+            LOG.info("STT diabaikan (%s): %r", reason, text[:120])
+            self.telemetry.stage("stt", "ignored", reason=reason, text=text[:100])
+            # sedang menunggu pertanyaan dan ucapannya tidak jelas: minta diulang, sekali per penantian
+            if len(stt_tokens(text)) >= 3 and self.session.should_say_unclear():
+                self.speaker.say(messages.MSG_UNCLEAR_AUDIO, "confused")
+            return None
+        cleaned = stt_strip_prompt_sentence(text)
+        if cleaned == text:
+            return text, called
+        if not cleaned:
+            LOG.info("STT diabaikan (gema kalimat prompt): %r", text[:120])
+            self.telemetry.stage("stt", "ignored", reason="gema kalimat prompt", text=text[:100])
+            return None
+        LOG.info("Gema kalimat prompt dibuang: %r -> %r", text[:120], cleaned[:120])
+        return self._addressing(cleaned)
+
+    def _record_and_transcribe(self) -> str:
         try:
             capture = self.recorder.record()
         except Exception as exc:
             self.telemetry.stage("error", "audio", detail=str(exc)[:200])
             LOG.exception("Perekaman gagal")
             time.sleep(1)
-            return
+            return ""
         if capture is None:
             self._expire_await()
-            return
+            return ""
         self._expire_await(time.monotonic() - capture.duration_s)
         try:
-            text = self.transcriber.transcribe(capture.path)
+            return self.transcriber.transcribe(capture.path)
         except Exception as exc:
             self.telemetry.stage("error", "stt", detail=str(exc)[:200])
             LOG.exception("STT gagal")
-            return
+            return ""
         finally:
             capture.path.unlink(missing_ok=True)
-        if not text:
-            return
 
-        if _NAME_RE.search(text):
-            text = collapse_repeats(text)
-        # nama di awal kalimat atau akhir ucapan; di tengah kalimat bukan panggilan
+    @staticmethod
+    def _addressing(text: str) -> tuple[str, bool]:
+        """Nama di awal kalimat atau akhir ucapan = panggilan; di tengah kalimat bukan (nlu.wake.call_text)."""
         called_part = call_text(text)
-        called = bool(called_part)
-        if called:
-            text = called_part
-        stt = self.transcriber
-        reason = stt_garbage_reason(text, stt.last_stats, stt.vocab, stt.prompt_terms) if stt.filter_enabled else ""
-        if reason:
-            LOG.info("STT diabaikan (%s): %r", reason, text[:120])
-            self.telemetry.stage("stt", "ignored", reason=reason, text=text[:100])
-            # sedang menunggu pertanyaan dan ucapannya tidak jelas: minta diulang, sekali per giliran
-            if (self.session.awaiting_question and not self.session.social and not self.session.unclear_said
-                    and len(_stt_tokens(text)) >= 3):
-                self.session.unclear_said = True
-                self.speaker.say(messages.MSG_UNCLEAR_AUDIO, "confused")
+        return (called_part, True) if called_part else (text, False)
+
+    # -- tanggapi ---------------------------------------------------------------------
+    def _confirm(self, text: str) -> None:
+        """Hanya nama ("Halo Brone"): ingatkan agar nama disebut bersama pertanyaan, atau "Ya?"."""
+        if self.settings.await_s <= 0:
+            # tanpa jendela susulan: ucapan tanpa nama tidak pernah dijawab (20 Okt 2026)
+            self.speaker.say(messages.SAY_CALL_HINT, "happy")
+            self.telemetry.stage("idle", "standby", wake_text=text[:100])
             return
-        cleaned = stt_strip_prompt_sentence(text) if stt.filter_enabled else text
-        if cleaned != text:
-            if not cleaned:
-                LOG.info("STT diabaikan (gema kalimat prompt): %r", text[:120])
-                self.telemetry.stage("stt", "ignored", reason="gema kalimat prompt", text=text[:100])
-                return
-            LOG.info("Gema kalimat prompt dibuang: %r -> %r", text[:120], cleaned[:120])
-            text = cleaned
-            called_part = call_text(text)
-            called = bool(called_part)
-            if called:
-                text = called_part
+        self.speaker.say(messages.SAY_CONFIRM, "happy")
+        self.session.start_wait(self.settings.await_s)
+        self.telemetry.stage("idle", "awaiting_question", wake_text=text[:100])
 
-        awaiting = self.session.awaiting_question
-        outcome = decide(text, called=called, awaiting=awaiting)
-
-        if outcome.decision is Decision.STOP:
-            self.speaker.say(messages.SAY_STOP, "neutral")
-            self.session.awaiting_question = False
-            self.telemetry.stage("idle", "standby", reason="voice_stop")
-            return
-        if outcome.decision is Decision.STANDBY:
-            self.telemetry.stage("idle", "standby", heard=text[:100])
-            return
-
-        if called:
-            # setiap ucapan yang memanggil Bron (nama di awal/akhir) dijawab; giliran baru mengosongkan riwayat
-            self._clear_conversation()
-
-        if outcome.decision is Decision.CONFIRM:
-            if self.settings.await_s <= 0:
-                # tanpa jendela susulan: ucapan tanpa nama tidak pernah dijawab (20 Okt 2026)
-                self.speaker.say(messages.SAY_CALL_HINT, "happy")
-                self.telemetry.stage("idle", "standby", wake_text=text[:100])
-                return
-            self.speaker.say(messages.SAY_CONFIRM, "happy")
-            self.session.start_wait(self.settings.await_s)
-            self.telemetry.stage("idle", "awaiting_question", wake_text=text[:100])
-            return
-
+    def _reply(self, outcome: Outcome, text: str) -> None:
         if outcome.wake:
             self.telemetry.stage("idle", "answering", wake_text=outcome.question[:100])
         else:
@@ -236,8 +246,7 @@ class TalkService:
         question = outcome.question
         social_reply = not outcome.wake and self.session.social
         replying_to = self.session.bot_text if social_reply else ""
-        self.session.awaiting_question = False
-        self.session.social = False
+        self.session.end_wait()
 
         clock = clock_answer(question)
         if clock:
@@ -249,7 +258,7 @@ class TalkService:
         try:
             answer = self._answer(question, replying_to)
         except Exception:
-            self.telemetry.status("error", "v4 tidak tersedia")
+            self.telemetry.status("error", "mesin jawaban tidak tersedia")
             self.speaker.say(messages.SAY_SERVICE_ERROR, "confused")
             LOG.exception("Mesin jawaban gagal")
             self.telemetry.stage("idle", "standby")

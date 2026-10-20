@@ -62,6 +62,11 @@ class FaqIndex:
                 self._owner.append(i)
         self._mat: np.ndarray | None = None
 
+    @property
+    def sentence_count(self) -> int:
+        """Jumlah kalimat ter-embed (pertanyaan + variasinya)."""
+        return len(self._texts)
+
     def build(self) -> None:
         self._mat = self.embedder.embed(self._texts, timeout_s=120)
         self._owner_arr = np.asarray(self._owner)

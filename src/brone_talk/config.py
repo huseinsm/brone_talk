@@ -57,9 +57,8 @@ class AudioConfig:
     input_device: str = "reSpeaker XVF3800"  # BRONE_INPUT_DEVICE (jalur sounddevice)
     alsa_device: str = "pipewire"  # BRONE_INPUT_ALSA_DEVICE
     pw_node: str = "brone-mic-xvf"  # BRONE_INPUT_PIPEWIRE_NODE (cadangan)
-    pw_nodes: str = "Wireless microphone=brone-mic-wireless,XVF3800=brone-mic-xvf"  # BRONE_INPUT_PIPEWIRE_NODES: prioritas
-    doa_node: str = "brone-mic-raw4"  # BRONE_DOA_PIPEWIRE_NODE
-    doa_card: str = "XVF3800"  # BRONE_DOA_CARD
+    # BRONE_INPUT_PIPEWIRE_NODES: kartu=node, urutan = prioritas
+    pw_nodes: str = "Wireless microphone=brone-mic-wireless,XVF3800=brone-mic-xvf"
     output_device: str = "default"  # BRONE_OUTPUT_DEVICE
     playback: bool = True  # BRONE_PLAYBACK
     vad_threshold: float = 0.7  # BRONE_VAD_THRESHOLD
@@ -72,16 +71,6 @@ class AudioConfig:
     noise_stationary: bool = False  # BRONE_NOISE_STATIONARY
 
 
-@dataclass(frozen=True)
-class LockConfig:
-    enabled: bool = False  # BRONE_LOCK (dinonaktifkan 19 Okt 2026, lihat docs/decisions.md)
-    timeout_s: float = 15.0  # BRONE_LOCK_TIMEOUT_SECONDS
-    voice_accept: float = 0.45  # BRONE_LOCK_VOICE_ACCEPT
-    voice_reject: float = 0.30  # BRONE_LOCK_VOICE_REJECT
-    min_voice_s: float = 0.8  # BRONE_LOCK_MIN_VOICE_SECONDS
-    dir_tolerance_deg: float = 35.0  # BRONE_LOCK_DIR_TOLERANCE_DEG
-    min_doa_confidence: float = 0.2  # BRONE_LOCK_MIN_DOA_CONFIDENCE
-    model: Path = ROOT / "models" / "speaker" / "3dspeaker_speech_campplus_sv_zh_en_16k-common_advanced.onnx"
 
 
 @dataclass(frozen=True)
@@ -161,7 +150,6 @@ class EngineSettings:
 class Settings:
     mqtt: MqttConfig = field(default_factory=MqttConfig)
     audio: AudioConfig = field(default_factory=AudioConfig)
-    lock: LockConfig = field(default_factory=LockConfig)
     stt: SttConfig = field(default_factory=SttConfig)
     mai: MaiConfig = field(default_factory=MaiConfig)
     tts: TtsConfig = field(default_factory=TtsConfig)
@@ -179,7 +167,6 @@ class Settings:
         env = os.environ if env is None else env
         d = MqttConfig()
         a = AudioConfig()
-        lk = LockConfig()
         s = SttConfig()
         m = MaiConfig()
         t = TtsConfig()
@@ -194,8 +181,6 @@ class Settings:
             alsa_device=_str(env, "BRONE_INPUT_ALSA_DEVICE", a.alsa_device),
             pw_node=_str(env, "BRONE_INPUT_PIPEWIRE_NODE", a.pw_node),
             pw_nodes=_str(env, "BRONE_INPUT_PIPEWIRE_NODES", a.pw_nodes),
-            doa_node=_str(env, "BRONE_DOA_PIPEWIRE_NODE", a.doa_node),
-            doa_card=_str(env, "BRONE_DOA_CARD", a.doa_card),
             output_device=_str(env, "BRONE_OUTPUT_DEVICE", a.output_device),
             playback=_flag(env, "BRONE_PLAYBACK", a.playback),
             vad_threshold=_float(env, "BRONE_VAD_THRESHOLD", a.vad_threshold),
@@ -206,16 +191,6 @@ class Settings:
             noise_reduce=_flag(env, "BRONE_NOISE_REDUCE", a.noise_reduce),
             noise_prop_decrease=_float(env, "BRONE_NOISE_PROP_DECREASE", a.noise_prop_decrease),
             noise_stationary=_flag(env, "BRONE_NOISE_STATIONARY", a.noise_stationary),
-        )
-        lock = LockConfig(
-            enabled=_flag(env, "BRONE_LOCK", lk.enabled),
-            timeout_s=_float(env, "BRONE_LOCK_TIMEOUT_SECONDS", lk.timeout_s),
-            voice_accept=_float(env, "BRONE_LOCK_VOICE_ACCEPT", lk.voice_accept),
-            voice_reject=_float(env, "BRONE_LOCK_VOICE_REJECT", lk.voice_reject),
-            min_voice_s=_float(env, "BRONE_LOCK_MIN_VOICE_SECONDS", lk.min_voice_s),
-            dir_tolerance_deg=_float(env, "BRONE_LOCK_DIR_TOLERANCE_DEG", lk.dir_tolerance_deg),
-            min_doa_confidence=_float(env, "BRONE_LOCK_MIN_DOA_CONFIDENCE", lk.min_doa_confidence),
-            model=Path(_str(env, "BRONE_SPEAKER_MODEL", str(lk.model))),
         )
         stt = SttConfig(
             backend=_str(env, "BRONE_STT_BACKEND", s.backend).lower(),
@@ -283,7 +258,6 @@ class Settings:
         return cls(
             mqtt=mqtt,
             audio=audio,
-            lock=lock,
             stt=stt,
             mai=mai,
             tts=tts,

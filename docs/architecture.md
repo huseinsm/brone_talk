@@ -7,8 +7,9 @@ mic (PipeWire/ALSA)                                 [audio/capture.py]
   -> Silero VAD per 32 ms                           [audio/vad.py]
   -> endpointing: mulai saat ucapan, selesai setelah senyap [audio/endpointing.py]
   -> STT: MAI-Transcribe-2 (cloud) atau whisper     [stt/transcriber.py]
+  -> panggilan: "Brone" di awal kalimat / akhir ucapan [nlu/wake.py call_text]
   -> koreksi kata + filter sampah + strip prompt    [stt/corrections.py, stt/filters.py]
-  -> keputusan: diam / jawab "Ya?" / jawab / stop   [session.py]
+  -> keputusan: diam / ingatkan nama / jawab / stop [session.py]
   -> jam sistem (tanpa LLM)                          [nlu/wake.py]
   -> mesin jawaban                                  [engine/answer.py]
   -> TTS Piper + playback                           [tts/speaker.py, tts/normalize.py]
@@ -25,13 +26,16 @@ Urutan per pertanyaan (`engine/answer.py`, `AnswerEngine.answer`):
    dan variasi kalimatnya. Pengaman (`engine/entities.py`, `FaqIndex._guard`): FAQ satu fakultas
    tidak dipakai untuk fakultas lain, peran (rektor/dekan) harus cocok, kata tanya harus cocok,
    tahun harus ada di FAQ.
-3. **Gerakan fisik** diminta -> "kontrol gerakan belum aktif" (tanpa kontrol gerak di repo ini).
-4. **Retrieval hybrid** (`engine/retrieval.py`): BM25 dan embedding, digabung dengan RRF.
-5. **Reranker** bge-reranker-v2-m3 (`servers.py`). Skor di bawah `BRONE_RERANK_MIN` -> robot
-   menolak lewat kode ("belum punya informasi"), tanpa LLM.
-6. **LLM**: DeepSeek lebih dulu; gagal atau lewat batas waktu -> LFM2.5-2.6B lokal (llama.cpp).
+3. **Obrolan santai berjawaban tetap** (`kb/smalltalk.yaml`): menang bila skornya setara atau lebih
+   tinggi dari FAQ. Permintaan pantun, lelucon, dan tebak-tebakan dipilih lewat kata kunci.
+4. **Gerakan fisik** (`is_motion_command`): perintah pendek yang diawali kata gerak ("lambaikan
+   tangan", "ikut aku") -> "kontrol gerakan belum aktif". Pertanyaan tidak termasuk.
+5. **Retrieval hybrid** (`engine/retrieval.py`): BM25 dan embedding, digabung dengan RRF.
+6. **Reranker** bge-reranker-v2-m3 (`servers.py`). Skor di bawah `BRONE_RERANK_MIN` -> tidak ada
+   data UB: obrolan dijawab LLM persona (`CHAT_PROMPT`), permintaan info ditolak ("belum punya informasi").
+7. **LLM**: DeepSeek lebih dulu; gagal atau lewat batas waktu -> LFM2.5-2.6B lokal (llama.cpp).
    Prompt dan format JSON di `engine/llm.py`.
-7. **Cek grounding** (`engine/grounding.py`): angka dan nama di jawaban harus ada di konteks,
+8. **Cek grounding** (`engine/grounding.py`): angka dan nama di jawaban harus ada di konteks,
    bila tidak jawaban diganti penolakan.
 
 Tidak ada cache semantik: jawaban LLM tidak disimpan untuk dipakai ulang.
@@ -45,7 +49,6 @@ Tidak ada cache semantik: jawaban LLM tidak disimpan untuk dipakai ulang.
 | `session.py` | `decide()` murni: keputusan per ucapan; `Session`: state menunggu pertanyaan ("Ya?") |
 | `cli.py`, `__main__.py` | perintah `run`, `self-test`, `list-devices`, `mic-test`, `ask` |
 | `audio/` | perangkat, VAD, endpointing, perekaman |
-| `speaker_lock/` | kunci penanya (sidik suara CAM++ dan arah SRP-PHAT) |
 | `stt/` | transkripsi, koreksi, filter, skor confidence |
 | `nlu/wake.py` | nama Brone, panggilan, jawaban jam, kata stop |
 | `names.py` | satu sumber variasi nama "Brone" |
@@ -57,16 +60,17 @@ Tidak ada cache semantik: jawaban LLM tidak disimpan untuk dipakai ulang.
 ## Status state (`session.py`)
 
 ```
-IDLE --(nama + pertanyaan)----------------------> jawab -> IDLE
-IDLE --(nama saja)--> AWAITING --(ucapan valid)--> jawab -> IDLE
+IDLE --(nama di awal/akhir + pertanyaan)--------> jawab -> IDLE
+IDLE --(nama di tengah kalimat / tanpa nama)----> IDLE (diam)
+IDLE --(nama saja)--> "Sebut Bron bersama pertanyaannya" -> IDLE   (BRONE_AWAIT_SECONDS=0, produksi)
+IDLE --(nama saja)--> AWAITING ("Ya?")                              (bila BRONE_AWAIT_SECONDS > 0)
+IDLE --(Bron bertanya balik)--> AWAITING sosial (BRONE_SOCIAL_AWAIT_SECONDS, 8 s)
+AWAITING --(satu ucapan tanpa nama)--> jawab -> IDLE (sosial: diam bila ujungnya penolakan)
 AWAITING --(stop)--> IDLE ("Baik, Bron kembali standby.")
-AWAITING --(ucapan tidak jelas, sekali)--> tetap AWAITING
 AWAITING --(jendela habis)--> IDLE
-ucapan tanpa nama HANYA dijawab satu kali di status AWAITING, dalam BRONE_AWAIT_SECONDS (15 s)
 ```
 
-Kunci penanya (`speaker_lock/lock.py`) dibuat saat nama disebut, diperpanjang setiap kali ada
-ucapan penanya atau jawaban selesai, dan lepas setelah `BRONE_LOCK_TIMEOUT_SECONDS` tanpa suara.
+Kunci penanya (sidik suara + arah) dihapus 19 Okt 2026: setiap pertanyaan harus menyebut nama.
 
 ## Asal kode
 
@@ -74,7 +78,6 @@ ucapan penanya atau jawaban selesai, dan lepas setelah `BRONE_LOCK_TIMEOUT_SECON
 |---|---|
 | mesin jawaban, KB | `~/brone-talk-v4/brone_v4.py`, `~/brone-talk-v4/kb/` |
 | audio, STT, TTS, service | `~/brone-talk-v4/brone_talk.py` (sudah berisi kait v4) |
-| kunci penanya | `~/brone-talk/brone_lock.py` |
 | normalisasi TTS | `brone_talk.py` bagian normalisasi (versi lama) |
 
 Repo lama tidak diubah; `brone-pakai lama|v4` tetap bisa dipakai untuk kembali.

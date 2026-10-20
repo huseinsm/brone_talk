@@ -1,6 +1,6 @@
 """Wake word, pengenalan panggilan, dan jawaban jam untuk BRONE.
 
-Dipindah dari brone_talk.py (v4) tanpa perubahan logika. Semua fungsi di sini murni.
+Semua fungsi di sini murni.
 Bentuk variasi nama ("Brone", "Bron", salah-dengar STT) hanya didefinisikan sekali di sini.
 """
 
@@ -9,15 +9,12 @@ from __future__ import annotations
 import re
 import time
 
-from brone_talk.names import _BRONE_VARIANTS
-from brone_talk.text import _stt_tokens
+from brone_talk.names import BRONE_VARIANTS
+from brone_talk.text import stt_tokens
 
+_NAME = BRONE_VARIANTS
 
-
-
-_NAME = _BRONE_VARIANTS
-
-_NAME_RE = re.compile(rf"\b{_NAME}\b", re.I)
+NAME_RE = re.compile(rf"\b{_NAME}\b", re.I)
 
 _CALL_WORDS = ("halo", "hallo", "hai", "hei", "hey", "hi", "hello", "eh", "oh", "ya", "iya",
                "selamat", "pagi", "siang", "sore", "malam", "permisi", "tolong")
@@ -63,12 +60,12 @@ def wake_question(text: str) -> str:
     Kosong bila nama tidak disebut, atau ucapan hanya panggilan tanpa isi
     (< 2 kata selain nama/sapaan, mis. "Brone" atau "Halo Brone").
     """
-    if not _NAME_RE.search(text or ""):
+    if not NAME_RE.search(text or ""):
         return ""
     question = _HEAD_CALL_RE.sub("", text.strip(), count=1)
     question = _TAIL_CALL_RE.sub(r"\1", question).strip(" ,.!-")
     content = [w for w in re.findall(r"\w+", question.lower())
-               if w not in _CALL_WORDS and not _NAME_RE.fullmatch(w)]
+               if w not in _CALL_WORDS and not NAME_RE.fullmatch(w)]
     return question if len(content) >= 2 else ""
 
 def collapse_repeats(text: str) -> str:
@@ -84,13 +81,13 @@ def collapse_repeats(text: str) -> str:
     """
     parts: list[str] = []
     for part in re.split(r"(?<=[.!?,])\s+", text.strip()):
-        if parts and _stt_tokens(part) == _stt_tokens(parts[-1]) and _NAME_RE.search(part):
+        if parts and stt_tokens(part) == stt_tokens(parts[-1]) and NAME_RE.search(part):
             continue
         parts.append(part)
-    keys = [_stt_tokens(p) for p in parts]
+    keys = [stt_tokens(p) for p in parts]
     for period in range(1, len(parts) // 2 + 1):
         if (all(keys[i] == keys[i % period] for i in range(len(keys)))
-                and _NAME_RE.search(" ".join(parts[:period]))):
+                and NAME_RE.search(" ".join(parts[:period]))):
             return " ".join(parts[:period])
     return " ".join(parts)
 
@@ -99,7 +96,8 @@ _HARI = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
 _BULAN = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus",
           "September", "Oktober", "November", "Desember"]
 
-_CLOCK_FILLER = {"bron", "brone", "brun", "broni", "bronny", "brony", "berone", "beran", "beron", "done", "halo", "hallo", "hai", "hello", "hi",
+_CLOCK_FILLER = {"bron", "brone", "brun", "broni", "bronny", "brony", "berone", "beran", "beron", "done",
+                 "halo", "hallo", "hai", "hello", "hi",
                  "baiklah", "baik", "ya", "sekarang", "dong", "kah", "tolong", "sih", "nih", "oke", "coba",
                  "kasih", "tau", "tahu", "boleh", "saya", "aku", "mau", "tanya"}
 

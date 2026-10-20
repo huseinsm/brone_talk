@@ -1,6 +1,6 @@
 """Utilitas bersama mesin jawaban: normalisasi teks, HTTP JSON, dan tunggu server siap.
 
-Dipindah dari brone_v4.py tanpa perubahan logika (helper env dipindah ke config.py).
+Helper env ada di config.py.
 """
 
 from __future__ import annotations
@@ -15,8 +15,6 @@ from typing import Any
 
 
 LOG = logging.getLogger("brone-talk.v4")
-
-
 
 
 def norm_text(text: str) -> str:

@@ -17,7 +17,6 @@ OUT = ROOT / "docs" / "configuration.md"
 GROUPS = {
     "MqttConfig": "MQTT (telemetri ke Jetson)",
     "AudioConfig": "Audio: mic dan speaker",
-    "LockConfig": "Kunci penanya",
     "SttConfig": "STT (whisper lokal)",
     "MaiConfig": "STT cloud (MAI-Transcribe-2 via Azure Voice Live)",
     "TtsConfig": "TTS (Piper)",
@@ -67,7 +66,8 @@ def main() -> None:
         "|---|---|---|",
         "| `BRONE_WARMUP_LLM` | `1` | validasi mesin jawaban saat start (\"Halo Bron\") |",
         "| `BRONE_LOG_LEVEL` | `INFO` | tingkat log |",
-        "| `BRONE_LOCK_*` | lihat tabel kunci | diatur di kelas `LockConfig` |",
+        "| `BRONE_AWAIT_SECONDS` | `0` | jendela satu pertanyaan tanpa nama setelah \"Ya?\"; 0 = mati |",
+        "| `BRONE_SOCIAL_AWAIT_SECONDS` | `8` | jendela satu tanggapan setelah Bron bertanya balik |",
         "",
         "Rahasia (`BRONE_DEEPSEEK_API_KEY`, `BRONE_MAI_API_KEY`) hanya di `~/.config/brone-talk/brone.env`.",
         "",

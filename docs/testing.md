@@ -2,7 +2,7 @@
 
 ```bash
 make test                       # semua tes (golden dilewati bila fixture belum ada)
-make lint                       # pyflakes
+make lint                       # ruff
 make ask Q="siapa dekan filkom" # uji mesin jawaban lewat teks
 ```
 
@@ -37,7 +37,6 @@ Tanpa fixture, tes golden dilewati (`skipUnless`), dan itu terlihat di output se
 
 - **Perangkat keras.** Mic, speaker, dan jalur PipeWire belum diuji dari repo baru. Itu butuh
   `systemctl --user start brone-talk` di NUC (lihat `docs/deployment.md`, langkah smoke test).
-- **Kalibrasi kunci penanya.** Ambang sidik suara belum diukur dengan pengunjung asli.
 - **Filter sampah STT.** Fixture golden direkam tanpa kosakata, jadi `garbage_reason` hampir selalu
   kosong dan belum terbukti.
 - **MQTT langsung.** Kontrak topik dicek lewat kode dan `docs/mqtt-contract.md`, bukan subscriber

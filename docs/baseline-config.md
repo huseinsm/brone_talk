@@ -17,9 +17,7 @@ pengguna. Nilai ini juga menjadi **default di `config.py`** dan `deploy/systemd/
 | BRONE_INPUT_ALSA_DEVICE | pipewire | |
 | BRONE_INPUT_PIPEWIRE_NODE | brone-mic-xvf | channel 0 olahan chip (dipilih 19 Okt 2026) |
 | BRONE_INPUT_PIPEWIRE_NODES | Wireless microphone=brone-mic-wireless,XVF3800=brone-mic-xvf | prioritas mic |
-| BRONE_DOA_PIPEWIRE_NODE | brone-mic-raw4 | tidak dipakai saat kunci nonaktif |
 | BRONE_MAX_UTTERANCE_SECONDS | 8 | |
-| BRONE_LOCK | 0 | kunci penanya dinonaktifkan |
 | BRONE_AWAIT_SECONDS | 0 | jendela satu pertanyaan setelah "Ya?"; 0 = mati (20 Okt 2026, dulu 15) |
 | BRONE_SOCIAL_AWAIT_SECONDS | 8 | jendela satu tanggapan setelah Bron bertanya balik (obrolan santai) |
 | BRONE_CHAT_LLM | 1 | obrolan di luar kb/smalltalk.yaml dijawab LLM persona; 0 = ditolak |

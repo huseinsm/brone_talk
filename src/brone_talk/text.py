@@ -7,7 +7,7 @@ import re
 import unicodedata
 
 
-def _stt_tokens(text):
+def stt_tokens(text: str) -> list[str]:
     norm = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()
     return re.findall(r"[a-z0-9]+", norm)
 

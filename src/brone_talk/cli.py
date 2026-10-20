@@ -69,7 +69,7 @@ def mic_test(settings: Settings, rounds: int) -> int:
     runtime = settings.runtime_dir
     runtime.mkdir(parents=True, exist_ok=True)
     vad = SileroVad(settings.models_dir / "silero_vad.onnx")
-    recorder = Recorder(settings.audio, telemetry, Event(), vad, runtime, doa_enabled=False)
+    recorder = Recorder(settings.audio, telemetry, Event(), vad, runtime)
     transcriber = Transcriber(settings.stt, settings.mai, telemetry)
     transcriber.load()
     out = runtime / "mic_test.jsonl"

@@ -1,6 +1,6 @@
 """Keputusan per ucapan: kapan robot diam, kapan minta diulang, kapan menjawab.
 
-Aturan (dari brone_talk.py v4, BroneTalkService.run):
+Aturan:
   - "Brone" di awal kalimat atau akhir ucapan -> pertanyaannya dijawab langsung. Nama di tengah
     kalimat bukan panggilan (nlu.wake.call_text, 20 Okt 2026).
   - Hanya nama ("Brone", "Halo Brone") -> bila BRONE_AWAIT_SECONDS > 0: jawab "Ya?", lalu SATU
@@ -54,10 +54,22 @@ class Session:
         self.awaiting_question, self.awaiting_since, self.unclear_said = True, time.monotonic(), False
         self.await_window, self.social, self.bot_text = window_s, social, bot_text
 
-    def expire(self) -> None:
-        """Jendela penantian habis: ucapan berikutnya harus menyebut nama lagi."""
+    def end_wait(self) -> None:
+        """Penantian selesai (dijawab, dihentikan, atau habis): ucapan berikutnya harus menyebut nama."""
         self.awaiting_question = False
         self.social = False
+
+    def expired(self, now: float, default_window_s: float) -> bool:
+        """Sedang menunggu dan jendelanya sudah lewat pada waktu `now` (time.monotonic())."""
+        window = self.await_window or default_window_s
+        return self.awaiting_question and now - self.awaiting_since > window
+
+    def should_say_unclear(self) -> bool:
+        """Pesan "suara kurang jelas" hanya sekali per penantian "Ya?" (tidak untuk tanya-balik)."""
+        if not self.awaiting_question or self.social or self.unclear_said:
+            return False
+        self.unclear_said = True
+        return True
 
 
 def decide(text: str, *, called: bool, awaiting: bool) -> Outcome:

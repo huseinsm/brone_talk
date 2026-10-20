@@ -1,4 +1,8 @@
-"""answer: bagian mesin jawaban v4 (dipindah dari brone_v4.py tanpa perubahan logika)."""
+"""Mesin jawaban: FAQ, obrolan santai, permintaan gerakan, lalu RAG (retrieval + reranker) + LLM + grounding.
+
+Urutan per ucapan ada di AnswerEngine.answer; setiap jalur mengembalikan dict lewat _result dengan
+`route` yang dicatat di runtime/turns.jsonl.
+"""
 
 from __future__ import annotations
 
@@ -24,9 +28,17 @@ from brone_talk.engine.grounding import grounding_problems
 from brone_talk.messages import MSG_CHAT_FALLBACK, MSG_MOTION, MSG_NOT_UNDERSTOOD, MSG_NO_INFO, MSG_SERVICE_DOWN
 from brone_talk.engine.util import LOG
 
-_MOTION_RE = re.compile(r"\b(me)?(lambai\w*|lambaikan|duduk|berdiri|jalan\w*|ikut\w*|wave|sit|stand|follow)\b", re.I)
-
-_MOTION_QUESTION_RE = re.compile(r"\b(bisa|dapat|mampu|apakah|kah)\b", re.I)
+# Permintaan gerakan = perintah pendek yang DIAWALI kata gerak ("lambaikan tangan", "coba berdiri dong").
+# 20 Okt 2026: dulu kata gerak di mana saja, termasuk "jalan\w*" dan "ikut\w*", jadi "jalanin lagi",
+# "jalan ke FILKOM lewat mana" dan "sejarah berdiri FILKOM" ditolak sebagai perintah gerakan.
+_MOTION_RE = re.compile(
+    r"(?:me)?(?:lambai\w*|duduk|berdiri|jalan|berjalan|wave|sit|stand|follow)\b(?! jalan)"
+    r"|ikut(?:i|lah)? (?:aku|saya|kami|kita)\b")
+_MOTION_FILLER = {"tolong", "coba", "ayo", "yuk", "ayuk", "dong", "deh", "sih", "please", "kamu", "sekarang",
+                  "boleh", "bron", "brone"}
+_MOTION_QUESTION_RE = re.compile(
+    r"\b(bisa|dapat|mampu|apakah|\w+kah|apa|siapa|mana|dimana|kemana|berapa|kapan|gimana|bagaimana"
+    r"|kenapa|mengapa|lewat)\b", re.I)
 
 _EXPRESSIONS = {"happy", "neutral", "sad", "excited", "confused"}
 
@@ -39,6 +51,23 @@ _FUN_REQUESTS = [
 
 # LLM obrolan kadang tetap memakai "aku"/"saya" untuk dirinya; tim memilih "Bron"
 _SELF_RE = re.compile(r"\b(aku|saya)\b", re.I)
+
+# galat backend LLM yang membuat kita mencoba backend berikutnya
+_LLM_ERRORS = (OSError, urllib.error.URLError, ValueError, KeyError)
+
+
+def is_motion_command(text: str) -> bool:
+    """Perintah gerak fisik pendek, bukan pertanyaan: "lambaikan tangan", "ikut aku", "coba duduk dong"."""
+    if "?" in text or _MOTION_QUESTION_RE.search(text):
+        return False
+    words = [w for w in norm_text(text).split() if w not in _MOTION_FILLER]
+    return 0 < len(words) <= 4 and bool(_MOTION_RE.match(" ".join(words)))
+
+
+def _expression(value: Any, default: str) -> str:
+    expression = str(value or default).lower()
+    return expression if expression in _EXPRESSIONS else default
+
 
 @dataclass
 class EngineConfig:
@@ -71,6 +100,7 @@ class EngineConfig:
     smalltalk: bool = True  # kb/smalltalk.yaml: obrolan santai berjawaban tetap
     chat_llm: bool = True  # obrolan di luar daftar dijawab LLM persona (bukan mode faq)
     startup_wait_s: float = 120.0
+
 
 class AnswerEngine:
     def __init__(self, cfg: EngineConfig) -> None:
@@ -106,9 +136,10 @@ class AnswerEngine:
         self.embedder.save()
         self.reranker.start(self.cfg.startup_wait_s)
         if self.cfg.mode in ("auto", "local") and not wait_for_server(self.cfg.local_url, self.cfg.startup_wait_s):
-            LOG.warning("LLM lokal %s belum siap; cadangan lokal tidak tersedia sampai server hidup", self.cfg.local_url)
-        LOG.info("Mesin v4 siap dalam %.1fs: %d FAQ (%d kalimat), %d obrolan, %d chunk, cloud=%s, mode=%s",
-                 time.perf_counter() - t0, len(self.faq.faqs), len(self.faq._texts),
+            LOG.warning("LLM lokal %s belum siap; cadangan lokal tidak tersedia sampai server hidup",
+                        self.cfg.local_url)
+        LOG.info("Mesin jawaban siap dalam %.1fs: %d FAQ (%d kalimat), %d obrolan, %d chunk, cloud=%s, mode=%s",
+                 time.perf_counter() - t0, len(self.faq.faqs), self.faq.sentence_count,
                  len(self.smalltalk.faqs) if self.smalltalk else 0, len(self.retriever.chunks),
                  "ya" if self.cloud else "tidak", self.cfg.mode)
 
@@ -135,7 +166,7 @@ class AnswerEngine:
         if ask_back:
             rec["tanya_balik"] = True
         self._log(rec)
-        LOG.info("v4 %s %dms: %r", route, rec["total_ms"], response[:120])
+        LOG.info("jawab %s %dms: %r", route, rec["total_ms"], response[:120])
         return {"type": "question", "feature": "", "response": response, "expression": expression,
                 "route": route, "ask_back": ask_back, "meta": rec}
 
@@ -143,6 +174,27 @@ class AnswerEngine:
     def _backends(self) -> list[LLMBackend]:
         chosen = {"auto": [self.cloud, self.local], "cloud": [self.cloud], "local": [self.local]}[self.cfg.mode]
         return [b for b in chosen if b is not None]
+
+    def _ask_llm(self, messages: list[dict], rec: dict, key: str,
+                 temperature: float = 0.1) -> tuple[dict | None, list[str]]:
+        """Coba backend berurutan (cloud lalu lokal) sampai satu memberi JSON yang valid.
+
+        rec[key] = backend terakhir yang menjawab; kembalian (json atau None, daftar galat).
+        """
+        errors: list[str] = []
+        for be in self._backends():
+            try:
+                raw, stats = be.chat(messages, temperature=temperature)
+            except _LLM_ERRORS as exc:
+                errors.append(f"{be.name}: {str(exc)[:120]}")
+                LOG.warning("LLM %s (%s) gagal: %s", be.name, key, exc)
+                continue
+            rec[key] = {"backend": be.name, **stats}
+            parsed = parse_llm_json(raw)
+            if parsed is not None:
+                return parsed, errors
+            errors.append(f"{be.name}: JSON tidak valid {raw[:80]!r}")
+        return None, errors
 
     def _chat_or_refuse(self, text: str, replying_to: str, refusal_route: str, rec: dict, t0: float) -> dict:
         """Tidak ada data UB untuk ucapan ini: obrolan santai dijawab LLM persona, permintaan info tetap ditolak.
@@ -156,18 +208,9 @@ class AnswerEngine:
         if replying_to:
             user = f"BRON SEBELUMNYA BERKATA: {replying_to}\n{user}"
         messages = [{"role": "system", "content": CHAT_PROMPT}, {"role": "user", "content": user}]
-        parsed = None
-        for be in self._backends():
-            try:
-                raw, stats = be.chat(messages, temperature=0.7)
-                rec["chat_llm"] = {"backend": be.name, **stats}
-                parsed = parse_llm_json(raw)
-                if parsed is not None:
-                    break
-                rec.setdefault("chat_errors", []).append(f"{be.name}: JSON tidak valid {raw[:80]!r}")
-            except (OSError, urllib.error.URLError, ValueError, KeyError) as exc:
-                rec.setdefault("chat_errors", []).append(f"{be.name}: {str(exc)[:120]}")
-                LOG.warning("LLM obrolan %s gagal: %s", be.name, exc)
+        parsed, errors = self._ask_llm(messages, rec, "chat_llm", temperature=0.7)
+        if errors:
+            rec["chat_errors"] = errors
         if parsed is None:
             return self._result(refusal_route, MSG_NO_INFO, "neutral", rec, t0)
         kind = str(parsed.get("jenis", "")).lower()
@@ -182,15 +225,17 @@ class AnswerEngine:
             rec["grounding"] = problems
             rec["llm_response"] = response
             return self._result("tolak_grounding_obrolan", MSG_CHAT_FALLBACK, "happy", rec, t0)
-        response = _SELF_RE.sub(lambda m: "Bron", response)
-        expression = str(parsed.get("expression", "happy")).lower()
-        if expression not in _EXPRESSIONS:
-            expression = "happy"
+        response = _SELF_RE.sub("Bron", response)
         ask_back = bool(parsed.get("tanya_balik")) and response.endswith("?") and not replying_to
-        return self._result(f"obrolan_{rec['chat_llm']['backend']}", response, expression, rec, t0, ask_back)
+        return self._result(f"obrolan_{rec['chat_llm']['backend']}", response,
+                            _expression(parsed.get("expression"), "happy"), rec, t0, ask_back)
 
     def answer(self, text: str, stt: dict | None = None, replying_to: str = "") -> dict:
-        """replying_to: kata-kata Bron yang sedang ditanggapi (jendela tanya-balik), atau ""."""
+        """Jawab satu ucapan. replying_to: kata-kata Bron yang sedang ditanggapi (jendela tanya-balik), atau "".
+
+        Urutan: hiburan (kata kunci) -> FAQ / obrolan berjawaban tetap -> permintaan gerakan
+        -> RAG + LLM (cloud lalu lokal) -> grounding. Tanpa data UB, obrolan dijawab LLM persona.
+        """
         t0 = time.perf_counter()
         text = text.strip()
         rec: dict[str, Any] = {"ts": _dt.datetime.now().isoformat(timespec="seconds"), "text": text, "stt": stt}
@@ -201,12 +246,26 @@ class AnswerEngine:
 
         qvec = self.embedder.embed([text])[0]
         rec["embed_ms"] = round((time.perf_counter() - t0) * 1000)
+        fixed = self._fixed_answer(text, qvec, stt, replying_to, rec, t0)
+        if fixed is not None:
+            return fixed
+        # permintaan gerakan dicek setelah FAQ, supaya "kamu bisa melambai?" dijawab FAQ
+        if is_motion_command(text):
+            return self._result("gerakan", MSG_MOTION, "neutral", rec, t0)
+        if self.cfg.mode == "faq":
+            return self._result("tolak_mode_faq", MSG_NO_INFO, "neutral", rec, t0)
+        return self._rag_answer(text, qvec, replying_to, rec, t0)
 
-        # 2. FAQ. STT kurang yakin -> FAQ hanya bila kemiripannya sangat tinggi.
-        # 14 Okt 2026: dulu FAQ dilewati sama sekali. Tetapi whisper-small memberi "Terima kasih." yang bersih
-        # skor 0,38-0,62 (13 dari 24 di bawah 0,50; skor FAQ-nya 0,91-0,98), sedangkan gema prompt whisper
-        # justru 0,40-0,79 -- skor STT tidak memisahkan ucapan asli dari sampah, dan teks yang dilewatkan
-        # tetap berakhir di RAG/LLM. MAI tidak mengirim skor (selalu BRONE_MAI_DEFAULT_PROB).
+    def _fixed_answer(self, text: str, qvec: Any, stt: dict | None, replying_to: str,
+                      rec: dict, t0: float) -> dict | None:
+        """Jawaban tetap tanpa LLM: hiburan (kata kunci), FAQ, atau obrolan dari kb/smalltalk.yaml.
+
+        STT kurang yakin -> FAQ hanya bila kemiripannya sangat tinggi.
+        14 Okt 2026: dulu FAQ dilewati sama sekali. Tetapi whisper-small memberi "Terima kasih." yang bersih
+        skor 0,38-0,62 (13 dari 24 di bawah 0,50; skor FAQ-nya 0,91-0,98), sedangkan gema prompt whisper
+        justru 0,40-0,79 -- skor STT tidak memisahkan ucapan asli dari sampah, dan teks yang dilewatkan
+        tetap berakhir di RAG/LLM. MAI tidak mengirim skor (selalu BRONE_MAI_DEFAULT_PROB).
+        """
         stt_ok, stt_note = self._stt_ok(stt)
         min_sim = None if stt_ok else self.cfg.faq_low_stt_min_sim
         rec["stt_gate"] = stt_note + (" -> FAQ boleh" if stt_ok else f" -> FAQ hanya bila skor >= {min_sim:.2f}")
@@ -227,16 +286,13 @@ class AnswerEngine:
                           "margin": round(hit.margin, 4), "rejected": hit.rejected}
             self.prev_question = text
             return self._result("faq", hit.faq["a"], "happy", rec, t0)
+        return None
 
-        # 1. permintaan gerakan fisik (setelah FAQ, supaya "kamu bisa melambai?" dijawab FAQ)
-        if _MOTION_RE.search(text) and not _MOTION_QUESTION_RE.search(text) and len(norm_text(text).split()) <= 5:
-            return self._result("gerakan", MSG_MOTION, "neutral", rec, t0)
-        if self.cfg.mode == "faq":
-            return self._result("tolak_mode_faq", MSG_NO_INFO, "neutral", rec, t0)
-
-        # 3. retrieval + reranker gate
+    def _rag_answer(self, text: str, qvec: Any, replying_to: str, rec: dict, t0: float) -> dict:
+        """Retrieval + gerbang reranker -> LLM dengan konteks -> grounding."""
         query = text
         if self.prev_question and len(norm_text(text).split()) <= 5:
+            # pertanyaan susulan pendek ("kalau FILKOM?") dicari bersama pertanyaan sebelumnya
             query = f"{self.prev_question} {text}"
             qvec = self.embedder.embed([query])[0]
         t1 = time.perf_counter()
@@ -248,39 +304,16 @@ class AnswerEngine:
             LOG.warning("Reranker gagal: %s", exc)
             rec["error"] = f"reranker: {exc}"
             return self._result("tolak_reranker_error", MSG_NO_INFO, "neutral", rec, t0)
-        ranked = sorted(zip(cand, scores), key=lambda p: -p[1])
+        ranked = sorted(zip(cand, scores, strict=False), key=lambda p: -p[1])
         rec["retrieval_ms"] = round((time.perf_counter() - t1) * 1000)
         rec["top"] = [(self.retriever.chunks[i]["id"], round(s, 3)) for i, s in ranked[:5]]
         if not ranked or ranked[0][1] < self.cfg.rerank_min:
             return self._chat_or_refuse(text, replying_to, "tolak_tidak_ada_info", rec, t0)
 
-        ctx_parts, used = [], 0
-        for i, s in ranked[: self.cfg.context_chunks]:
-            if s < self.cfg.rerank_min * 0.5 and ctx_parts:
-                break
-            doc = f"[{self.retriever.chunks[i]['judul']}] {self.retriever.chunks[i]['teks']}"
-            if used + len(doc) > self.cfg.context_chars and ctx_parts:
-                break
-            ctx_parts.append(doc)
-            used += len(doc)
-        context = "\n".join(ctx_parts)
+        context = self._context(ranked)
         messages = [{"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": f"KONTEKS:\n{context}\n\nPERTANYAAN: {text}"}]
-
-        # 4. LLM: cloud lalu lokal
-        parsed, errors = None, []
-        for be in self._backends():
-            try:
-                raw, stats = be.chat(messages)
-                rec["llm"] = {"backend": be.name, **stats}
-                parsed = parse_llm_json(raw)
-                if parsed is None:
-                    errors.append(f"{be.name}: JSON tidak valid {raw[:80]!r}")
-                    continue
-                break
-            except (OSError, urllib.error.URLError, ValueError, KeyError) as exc:
-                errors.append(f"{be.name}: {str(exc)[:120]}")
-                LOG.warning("LLM %s gagal: %s", be.name, exc)
+        parsed, errors = self._ask_llm(messages, rec, "llm")
         if errors:
             rec["llm_errors"] = errors
         if parsed is None:
@@ -289,13 +322,8 @@ class AnswerEngine:
             return self._result("tidak_dimengerti", MSG_NOT_UNDERSTOOD, "confused", rec, t0)
 
         response = str(parsed.get("response", "")).strip()
-        expression = str(parsed.get("expression", "neutral")).lower()
-        if expression not in {"happy", "neutral", "sad", "excited", "confused"}:
-            expression = "neutral"
         if parsed.get("answerable") is False or not response:
             return self._chat_or_refuse(text, replying_to, "tolak_llm", rec, t0)
-
-        # 5. grounding
         if self.cfg.grounding:
             problems = grounding_problems(response, context, text)
             if problems:
@@ -303,4 +331,19 @@ class AnswerEngine:
                 rec["llm_response"] = response
                 return self._result("tolak_grounding", MSG_NO_INFO, "neutral", rec, t0)
         self.prev_question = text
-        return self._result(f"llm_{rec['llm']['backend']}", response, expression, rec, t0)
+        return self._result(f"llm_{rec['llm']['backend']}", response,
+                            _expression(parsed.get("expression"), "neutral"), rec, t0)
+
+    def _context(self, ranked: list[tuple[int, float]]) -> str:
+        """Gabungan chunk teratas, dibatasi context_chunks dan context_chars (chunk pertama selalu masuk)."""
+        parts, used = [], 0
+        for i, score in ranked[: self.cfg.context_chunks]:
+            if score < self.cfg.rerank_min * 0.5 and parts:
+                break
+            chunk = self.retriever.chunks[i]
+            doc = f"[{chunk['judul']}] {chunk['teks']}"
+            if used + len(doc) > self.cfg.context_chars and parts:
+                break
+            parts.append(doc)
+            used += len(doc)
+        return "\n".join(parts)

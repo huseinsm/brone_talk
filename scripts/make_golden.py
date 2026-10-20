@@ -102,7 +102,8 @@ def golden_engine_routes(evals: list[str]) -> None:
         qvec = engine.embedder.embed([text])[0]
         cand = engine.retriever.search(text, qvec, top=cfg.rerank_top)
         try:
-            scores = engine.reranker.score(text, [engine.retriever.chunks[i]["_doc"][: cfg.rerank_doc_chars] for i in cand])
+            docs = [engine.retriever.chunks[i]["_doc"][: cfg.rerank_doc_chars] for i in cand]
+            scores = engine.reranker.score(text, docs)
             top_rerank = round(max(scores), 4) if scores else None
         except Exception as exc:  # gerbang diuji ulang di Fase 1 bila reranker mati
             top_rerank = f"error: {exc}"

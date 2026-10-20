@@ -28,9 +28,7 @@ tidak dibawa ke sini; lihat `docs/decisions.md`.
 | `input_device` | `"reSpeaker XVF3800"` | `BRONE_INPUT_DEVICE` | (jalur sounddevice) |
 | `alsa_device` | `"pipewire"` | `BRONE_INPUT_ALSA_DEVICE` |  |
 | `pw_node` | `"brone-mic-xvf"` | `BRONE_INPUT_PIPEWIRE_NODE` | (cadangan) |
-| `pw_nodes` | `"Wireless microphone=brone-mic-wireless,XVF3800=brone-mic-xvf"` | `BRONE_INPUT_PIPEWIRE_NODES` | : prioritas |
-| `doa_node` | `"brone-mic-raw4"` | `BRONE_DOA_PIPEWIRE_NODE` |  |
-| `doa_card` | `"XVF3800"` | `BRONE_DOA_CARD` |  |
+| `pw_nodes` | `"Wireless microphone=brone-mic-wireless,XVF3800=brone-mic-xvf"` | `(tetap)` |  |
 | `output_device` | `"default"` | `BRONE_OUTPUT_DEVICE` |  |
 | `playback` | `True` | `BRONE_PLAYBACK` |  |
 | `vad_threshold` | `0.7` | `BRONE_VAD_THRESHOLD` |  |
@@ -41,21 +39,6 @@ tidak dibawa ke sini; lihat `docs/decisions.md`.
 | `noise_reduce` | `False` | `BRONE_NOISE_REDUCE` |  |
 | `noise_prop_decrease` | `0.9` | `BRONE_NOISE_PROP_DECREASE` |  |
 | `noise_stationary` | `False` | `BRONE_NOISE_STATIONARY` |  |
-
-## Kunci penanya
-
-`LockConfig`
-
-| Field | Default | Variabel env | Keterangan |
-|---|---|---|---|
-| `enabled` | `False` | `BRONE_LOCK` | (dinonaktifkan 19 Okt 2026, lihat docs/decisions.md) |
-| `timeout_s` | `15.0` | `BRONE_LOCK_TIMEOUT_SECONDS` |  |
-| `voice_accept` | `0.45` | `BRONE_LOCK_VOICE_ACCEPT` |  |
-| `voice_reject` | `0.30` | `BRONE_LOCK_VOICE_REJECT` |  |
-| `min_voice_s` | `0.8` | `BRONE_LOCK_MIN_VOICE_SECONDS` |  |
-| `dir_tolerance_deg` | `35.0` | `BRONE_LOCK_DIR_TOLERANCE_DEG` |  |
-| `min_doa_confidence` | `0.2` | `BRONE_LOCK_MIN_DOA_CONFIDENCE` |  |
-| `model` | `ROOT / "models" / "speaker" / "3dspeaker_speech_campplus_sv_zh_en_16k-common_advanced.onnx"` | `(tetap)` |  |
 
 ## STT (whisper lokal)
 
@@ -137,6 +120,7 @@ tidak dibawa ke sini; lihat `docs/decisions.md`.
 | `context_chunks` | `4` | `BRONE_CONTEXT_CHUNKS` |  |
 | `max_tokens` | `160` | `BRONE_LLM_MAX_TOKENS` |  |
 | `grounding` | `True` | `BRONE_GROUNDING` |  |
+| `chat_llm` | `True` | `BRONE_CHAT_LLM` | : obrolan di luar kb/smalltalk.yaml dijawab LLM persona |
 | `server_wait_s` | `120.0` | `BRONE_SERVER_WAIT_SECONDS` |  |
 
 ## Pengaturan lain
@@ -145,6 +129,7 @@ tidak dibawa ke sini; lihat `docs/decisions.md`.
 |---|---|---|
 | `BRONE_WARMUP_LLM` | `1` | validasi mesin jawaban saat start ("Halo Bron") |
 | `BRONE_LOG_LEVEL` | `INFO` | tingkat log |
-| `BRONE_LOCK_*` | lihat tabel kunci | diatur di kelas `LockConfig` |
+| `BRONE_AWAIT_SECONDS` | `0` | jendela satu pertanyaan tanpa nama setelah "Ya?"; 0 = mati |
+| `BRONE_SOCIAL_AWAIT_SECONDS` | `8` | jendela satu tanggapan setelah Bron bertanya balik |
 
 Rahasia (`BRONE_DEEPSEEK_API_KEY`, `BRONE_MAI_API_KEY`) hanya di `~/.config/brone-talk/brone.env`.

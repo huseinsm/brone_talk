@@ -22,8 +22,8 @@ self-test:  # validasi model dan mesin tanpa mic/speaker
 run:  # jalankan di terminal (di NUC biasanya lewat systemd)
 	$(PY) -m brone_talk run
 
-lint:  # pemeriksaan statis ringan
-	$(PY) -m pyflakes src tests scripts
+lint:  # pemeriksaan statis (ruff; pasang dengan: .venv/bin/pip install -e '.[dev]')
+	$(PY) -m ruff check src tests scripts
 
 clean:
 	find . -name __pycache__ -type d -prune -exec rm -rf {} +

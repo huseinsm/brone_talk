@@ -39,14 +39,16 @@ class Telemetry:
         except Exception as exc:
             LOG.warning("MQTT tidak dapat dimulai: %s", exc)
 
-    def _on_connect(self, _client: mqtt.Client, _userdata: Any, _flags: Any, reason_code: Any, _properties: Any = None) -> None:
+    def _on_connect(self, _client: mqtt.Client, _userdata: Any, _flags: Any, reason_code: Any,
+                    _properties: Any = None) -> None:
         self.connected = str(reason_code) in {"0", "Success"} or reason_code == 0
         if self.connected:
             LOG.info("MQTT terhubung ke %s:%s", self.broker, self.port)
         else:
             LOG.warning("MQTT connect gagal: %s", reason_code)
 
-    def _on_disconnect(self, _client: mqtt.Client, _userdata: Any, _disconnect_flags: Any, reason_code: Any, _properties: Any = None) -> None:
+    def _on_disconnect(self, _client: mqtt.Client, _userdata: Any, _disconnect_flags: Any, reason_code: Any,
+                       _properties: Any = None) -> None:
         self.connected = False
         if reason_code not in (0, None):
             LOG.warning("MQTT terputus: %s", reason_code)

@@ -57,11 +57,11 @@ Unit uji bernama `brone-talk-next` supaya `brone-talk` (produksi) tidak berubah 
 Periksa berurutan:
 
 - [ ] Warmup selesai, `voice_status` = `ready`.
-- [ ] Ucapkan "Brone": terdengar "Ya?" dari speaker yang benar (default sink; sekarang reSpeaker).
-- [ ] Ucapkan pertanyaan: jawaban terdengar. Ekspresi di `robot/expression` berubah.
-- [ ] Pertanyaan lanjutan tanpa nama dalam 15 detik: dijawab.
-- [ ] Diam 15 detik: kembali standby (`stage=idle, state=standby, reason=lock_timeout`).
-- [ ] "Selesai" saat menunggu: "Baik, Bron kembali standby."
+- [ ] Ucapkan "Brone" saja: Bron mengingatkan agar nama disebut bersama pertanyaan (speaker benar).
+- [ ] "Brone, UB ada di mana?" dan "UB ada di mana, Brone?": dijawab. Ekspresi di `robot/expression` berubah.
+- [ ] "kode BRONE talk itu sudah di-push belum": diam (nama di tengah kalimat).
+- [ ] Pertanyaan lanjutan tanpa nama: diam.
+- [ ] "Brone, apa kabar?" -> Bron bertanya balik; satu tanggapan tanpa nama dalam 8 detik dijawab.
 - [ ] `mosquitto_sub -h 192.168.100.2 -t 'robot/#'` menerima tahap yang sama.
 - [ ] `brone_talk_monitor.py` di `brone_main_ws` menampilkan status yang benar.
 - [ ] `state_machine_node.py` bisa start dan stop layanan lewat perintah `talk`.

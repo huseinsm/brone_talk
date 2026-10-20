@@ -22,10 +22,8 @@ Environment=BRONE_AUDIO_INPUT_BACKEND=alsa
 Environment=BRONE_INPUT_ALSA_DEVICE=pipewire
 Environment=BRONE_INPUT_PIPEWIRE_NODE=brone-mic-xvf
 Environment="BRONE_INPUT_PIPEWIRE_NODES=Wireless microphone=brone-mic-wireless,XVF3800=brone-mic-xvf"
-Environment=BRONE_DOA_PIPEWIRE_NODE=brone-mic-raw4
-# Kunci penanya (sidik suara/arah) dinonaktifkan 19 Okt 2026. Jendela "Ya?" = BRONE_AWAIT_SECONDS.
+# Hanya "Brone" di awal kalimat / akhir ucapan yang dijawab. Jendela "Ya?" = BRONE_AWAIT_SECONDS;
 # 20 Okt 2026: 0 = jawaban susulan tanpa nama dimatikan (obrolan tim setelah "Ya?" ikut dijawab).
-Environment=BRONE_LOCK=0
 Environment=BRONE_AWAIT_SECONDS=0
 # Bron bertanya balik -> satu tanggapan tanpa nama diterima dalam jendela ini.
 Environment=BRONE_SOCIAL_AWAIT_SECONDS=8

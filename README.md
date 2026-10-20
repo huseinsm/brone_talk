@@ -24,18 +24,17 @@ Repo ini tidak menyimpan kunci.
 ## Cara kerja singkat
 
 1. Mic PipeWire, Silero VAD memotong ucapan.
-2. Kunci penanya: sidik suara dan arah, supaya hanya penanya yang dilayani.
-3. STT, lalu koreksi dan filter sampah.
-4. Keputusan: nama dipanggil? pertanyaan? stop?
-5. Jawaban: jam sistem, atau mesin jawaban (FAQ, reranker, LLM, cek grounding).
-6. Piper TTS dan playback, dengan telemetri MQTT di setiap tahap.
+2. STT, lalu koreksi dan filter sampah.
+3. Keputusan: hanya ucapan dengan "Brone" di awal kalimat atau di akhir ucapan yang dijawab.
+4. Jawaban: jam sistem, atau mesin jawaban (FAQ, obrolan santai, reranker, LLM, cek grounding).
+5. Piper TTS dan playback, dengan telemetri MQTT di setiap tahap.
 
 Detail di [docs/architecture.md](docs/architecture.md).
 
 ## Struktur
 
 ```
-src/brone_talk/     paket: config, app, session, cli, audio/, stt/, engine/, tts/, nlu/, speaker_lock/
+src/brone_talk/     paket: config, app, session, cli, audio/, stt/, engine/, tts/, nlu/
 kb/                 basis pengetahuan (knowledge.yaml, build_kb.py, data/, hasil build)
 tests/              unit dan golden
 scripts/            make_golden.py (fixture lokal), gen_config_docs.py (docs konfigurasi)

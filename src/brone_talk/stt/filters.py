@@ -2,7 +2,7 @@
 
 import re
 
-from brone_talk.text import _stt_tokens
+from brone_talk.text import stt_tokens
 
 
 _STT_HALLUCINATIONS = (
@@ -43,11 +43,11 @@ def stt_prompt_echo(text, terms):
         best = max(best, run)
     return sum(hits) / len(chunks) >= 0.5 or best >= 3
 
-def stt_garbage_reason(text, stats=None, vocab=frozenset(), terms=frozenset()):
+def stt_garbage_reason(text, stats=None, vocab=frozenset(), terms=frozenset()):  # noqa: C901 (aturan filter berurutan)
     """Alasan teks STT harus dibuang sebelum wake-word/LLM, atau "" kalau layak diproses."""
     raw = text.strip()
     low = raw.lower()
-    toks = _stt_tokens(raw)
+    toks = stt_tokens(raw)
     if not toks:
         return "tanpa kata"
     if any(p in low for p in _STT_HALLUCINATIONS):
@@ -96,11 +96,11 @@ def stt_strip_prompt_sentence(text):
     if not _PROMPT_SENTENCE_ECHO.search(text):
         return text
     rest = re.sub(r"\s{2,}", " ", _PROMPT_SENTENCE_ECHO.sub(" ", text)).strip(" ,.;")
-    return rest if _stt_tokens(rest) else ""
+    return rest if stt_tokens(rest) else ""
 
 
 def stt_vocab(*texts):
-    return {t for text in texts for t in _stt_tokens(text or "") if len(t) > 1}
+    return {t for text in texts for t in stt_tokens(text or "") if len(t) > 1}
 
 
 def stt_prompt_terms(prompt, hotwords):

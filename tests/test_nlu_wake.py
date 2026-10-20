@@ -19,7 +19,7 @@ class WakeGolden(unittest.TestCase):
         mismatches = []
         for r in rows:
             got = {
-                "called": bool(wake._NAME_RE.search(r["input"])),
+                "called": bool(wake.NAME_RE.search(r["input"])),
                 "collapsed": wake.collapse_repeats(r["input"]),
                 "wake_question": wake.wake_question(wake.collapse_repeats(r["input"])),
                 "clock": wake.clock_answer(r["input"], now=1_760_000_000.0),

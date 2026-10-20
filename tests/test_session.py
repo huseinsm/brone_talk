@@ -1,4 +1,4 @@
-"""Aturan giliran (session.decide) harus sama dengan loop produksi brone_talk.py v4."""
+"""Aturan giliran (session.decide) dan state penantian (Session)."""
 
 import unittest
 
@@ -22,8 +22,8 @@ class DecideTest(unittest.TestCase):
         self.assertEqual(out.question, "berapa mahasiswa di UB")
         self.assertFalse(out.wake)
 
-    def test_follow_up_while_locked_without_name_is_ignored(self):
-        # kunci penanya aktif tidak cukup: tanpa nama dan tanpa "Ya?", diam
+    def test_follow_up_without_name_is_ignored(self):
+        # setelah jawaban, ucapan tanpa nama dan tanpa "Ya?" tidak dijawab
         out = decide("dan kalau di FILKOM", called=False, awaiting=False)
         self.assertEqual(out.decision, Decision.STANDBY)
 
@@ -43,10 +43,25 @@ class DecideTest(unittest.TestCase):
 
 
 class SessionTest(unittest.TestCase):
-    def test_expire_clears_waiting(self):
-        s = Session(awaiting_question=True, unclear_said=True)
-        s.expire()
+    def test_end_wait_clears_waiting(self):
+        s = Session(awaiting_question=True, unclear_said=True, social=True)
+        s.end_wait()
         self.assertFalse(s.awaiting_question)
+        self.assertFalse(s.social)
+
+    def test_window_expiry(self):
+        s = Session()
+        s.start_wait(8.0)
+        self.assertFalse(s.expired(s.awaiting_since + 7.9, 15.0))
+        self.assertTrue(s.expired(s.awaiting_since + 8.1, 15.0))
+
+    def test_unclear_is_said_once_and_never_for_ask_back(self):
+        s = Session()
+        s.start_wait(15.0)
+        self.assertTrue(s.should_say_unclear())
+        self.assertFalse(s.should_say_unclear())
+        s.start_wait(8.0, social=True, bot_text="Kamu sudah makan?")
+        self.assertFalse(s.should_say_unclear())
 
 
 if __name__ == "__main__":

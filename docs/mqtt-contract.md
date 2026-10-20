@@ -29,12 +29,11 @@ warmup), `error` (`detail` = pesan singkat). Konsumen menampilkannya sebagai sta
 | `listening` | `start` | `device`, `sample_rate` | mulai mendengarkan |
 | `listening` | `mic` | `node` | node PipeWire terpilih |
 | `listening` | `speech` | `rms` | ucapan terdeteksi |
-| `listening` | `done` | `audio_s`, `peak_rms`, `doa`, `doa_conf` | klip siap untuk STT |
+| `listening` | `done` | `audio_s`, `peak_rms` | klip siap untuk STT |
 | `listening` | `timeout` | `peak_rms` | tidak ada ucapan |
 | `listening` | `too_short` / `low_energy` | `audio_s` / `rms` | klip dibuang |
 | `stt` | `start` / `done` | `model`, `backend` / `ms`, `text`, `model` | transkripsi |
 | `stt` | `ignored` | `reason`, `text` | ucapan dibuang filter |
-| `lock` | `rejected` | `reason` | suara bukan penanya yang terkunci |
 | `llm` | `start` | `model`, `backend` | mesin jawaban mulai (`backend` = `v4`) |
 | `llm` | `done` | `ms`, `route`, `backend`, `model` | jawaban siap (`route` = faq, llm_cloud, dst.) |
 | `idle` | `awaiting_question` | `wake_text` | "Ya?" diucapkan |

@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 from brone_talk import messages
-from brone_talk.engine.answer import AnswerEngine, EngineConfig
+from brone_talk.engine.answer import AnswerEngine, EngineConfig, is_motion_command
 from brone_talk.engine.faq import load_smalltalk
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -94,6 +94,20 @@ class ChatOrRefuse(unittest.TestCase):
         eng, res = self.run_chat('{"jenis": "obrolan", "response": "Halo!"}', mode="faq")
         self.assertEqual(res["route"], "tolak_tidak_ada_info")
         self.assertIsNone(eng.cloud.messages)
+
+
+
+class MotionCommand(unittest.TestCase):
+    def test_short_commands_are_motion(self):
+        for text in ("lambaikan tangan", "coba berdiri dong", "ikut aku", "duduk", "tolong melambai", "wave"):
+            self.assertTrue(is_motion_command(text), text)
+
+    def test_questions_and_chatter_are_not_motion(self):
+        # 20 Okt 2026: dulu semua ini dijawab "kontrol gerakan Bron belum diaktifkan"
+        for text in ("jalanin lagi", "jalan ke FILKOM lewat mana", "sejarah berdiri FILKOM", "kapan FILKOM berdiri",
+                     "kamu bisa melambai?", "jalan-jalan yuk", "ikut UKM yang seru", "tempat duduk perpustakaan",
+                     "bisakah kamu duduk"):
+            self.assertFalse(is_motion_command(text), text)
 
 
 if __name__ == "__main__":

@@ -67,7 +67,8 @@ class HybridRetriever:
             for i, tf in enumerate(self._tf):
                 f = tf.get(w)
                 if f:
-                    scores[i] += idf * f * (self.k1 + 1) / (f + self.k1 * (1 - self.b + self.b * self._len[i] / self._avg))
+                    norm = 1 - self.b + self.b * self._len[i] / self._avg
+                    scores[i] += idf * f * (self.k1 + 1) / (f + self.k1 * norm)
         return scores
 
     def search(self, query: str, qvec: np.ndarray, top_each: int = 20, top: int = 10, rrf_k: int = 60) -> list[int]:

@@ -2,17 +2,17 @@
 
 import re
 
-from brone_talk.names import _BRONE_VARIANTS, _FILKOM_VARIANTS
+from brone_talk.names import BRONE_VARIANTS, FILKOM_VARIANTS
 
 
 _STT_FIX_RULES: list[tuple[str, str]] = [
-    (rf"\b{_BRONE_VARIANTS}\s*(?:{_FILKOM_VARIANTS}|field|vill?e?|fil|phil|com|kom|koma)(?:\s*com)?\b",
+    (rf"\b{BRONE_VARIANTS}\s*(?:{FILKOM_VARIANTS}|field|vill?e?|fil|phil|com|kom|koma)(?:\s*com)?\b",
      "BRONE FILKOM"),
     (r"\b(brownfield|bronevillekom|broneville|bronfield|braunfield|bronefilkom|brone_filkom)\b",
      "BRONE FILKOM"),
-    (rf"\b{_FILKOM_VARIANTS}(?:\s*\.?\s*com)?\b", "FILKOM"),
+    (rf"\b{FILKOM_VARIANTS}(?:\s*\.?\s*com)?\b", "FILKOM"),
     (r"\b(eprone|ebrone|ebron)\b", "Eh BRONE"),  # "Eh Brone" digabung Whisper small
-    (rf"\b{_BRONE_VARIANTS}\b", "BRONE"),
+    (rf"\b{BRONE_VARIANTS}\b", "BRONE"),
     (r"\b(berawijaya|bravijaya|berawi\s+jaya|brawi\s+jaya)\b", "Brawijaya"),
     # "masuk UB" -> "masuk Uber" (bench TTS 6 Okt 2026); hanya setelah kata konteks kampus.
     (r"\b(masuk|kuliah\s+di|kampus|di|ke|dari|mahasiswa)\s+uber\b", r"\1 UB"),
