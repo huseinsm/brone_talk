@@ -13,8 +13,12 @@ MSG_MOTION = "Maaf, kontrol gerakan Bron belum diaktifkan."
 
 MSG_SERVICE_DOWN = "Maaf, layanan percakapan Bron sedang bermasalah."
 
+# jawaban obrolan dari LLM menyebut nama/angka yang tidak ada di ucapan (lihat AnswerEngine._chat_or_refuse)
+MSG_CHAT_FALLBACK = "Hehe, Bron belum bisa menjawab yang itu. Kalau soal Universitas Brawijaya, tanya saja!"
+
 # Kalimat yang diucapkan saat alur percakapan (bukan penolakan mesin jawaban).
 SAY_CONFIRM = "Ya?"
+SAY_CALL_HINT = "Ya? Sebut nama Bron di awal atau akhir pertanyaan, ya."  # bila jendela susulan mati
 SAY_STOP = "Baik, Bron kembali standby."
 SAY_SERVICE_ERROR = "Maaf, layanan percakapan Bron sedang bermasalah."
 SAY_FALLBACK = "Maaf, saya tidak mengerti."  # jawaban kosong dari mesin (sama dengan produksi)

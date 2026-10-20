@@ -55,7 +55,7 @@ class FakeEngine:
         self.calls = []
         self.resets = 0
 
-    def answer(self, text, stt):
+    def answer(self, text, stt, **kwargs):
         self.calls.append(text)
         return {"route": "faq", "response": f"JAWAB {text}", "expression": "happy", "meta": {}}
 
@@ -85,7 +85,8 @@ class TurnFlowTest(unittest.TestCase):
         self._tmp = tempfile.TemporaryDirectory()
         self.dir = Path(self._tmp.name)
         self.svc = object.__new__(TalkService)  # lewati __init__ (butuh perangkat keras)
-        self.svc.settings = Settings.from_env({})
+        # alur "Ya?" + susulan diuji dengan jendela aktif; bawaan produksi 0 diuji terpisah
+        self.svc.settings = Settings.from_env({"BRONE_AWAIT_SECONDS": "15"})
         self.svc.telemetry = FakeTelemetry()
         self.svc.recorder = FakeRecorder(self.dir)
         self.svc.transcriber = FakeTranscriber()
@@ -119,6 +120,63 @@ class TurnFlowTest(unittest.TestCase):
         self.hear("Halo Brone", "berapa mahasiswa di UB")
         self.assertEqual(self.said(), [messages.SAY_CONFIRM, "JAWAB berapa mahasiswa di UB"])
         self.assertFalse(self.svc.session.awaiting_question)
+
+    def test_name_at_tail_is_answered(self):
+        self.hear("UB ada di mana, Brone?")
+        self.assertEqual(self.svc.engine.calls, ["UB ada di mana?"])
+
+    def test_name_mid_sentence_is_ignored(self):
+        self.hear("kode BRONE talk itu sudah di-push belum")
+        self.assertEqual(self.said(), [])
+        self.assertEqual(self.svc.engine.calls, [])
+
+    def test_default_has_no_follow_up_without_name(self):
+        self.svc.settings = Settings.from_env({})
+        self.hear("Hai, BRONE.", "Jalanin lagi. Dari awal.")
+        self.assertEqual(self.said(), [messages.SAY_CALL_HINT])
+        self.assertEqual(self.svc.engine.calls, [])
+        self.assertFalse(self.svc.session.awaiting_question)
+
+    def test_call_after_chatter_in_same_clip_is_answered(self):
+        self.hear("Satu, bentar. Oke. BRONE, siapa kamu?")
+        self.assertEqual(self.svc.engine.calls, ["siapa kamu?"])
+
+    def _script(self, *results):
+        """Ganti mesin palsu dengan jawaban berurutan; kembalikan daftar (teks, replying_to)."""
+        seen, it = [], iter(results)
+
+        def answer(text, stt=None, replying_to=""):
+            seen.append((text, replying_to))
+            return {"expression": "happy", "meta": {}, **next(it)}
+
+        self.svc.engine.answer = answer
+        return seen
+
+    def test_ask_back_accepts_one_reply_without_name(self):
+        seen = self._script({"route": "obrolan", "response": "Kamu sendiri gimana?", "ask_back": True},
+                            {"route": "obrolan", "response": "Syukurlah!"})
+        self.hear("Brone, apa kabar?", "aku baik", "makasih ya")
+        self.assertEqual(self.said(), ["Kamu sendiri gimana?", "Syukurlah!"])
+        self.assertEqual(seen, [("apa kabar?", ""), ("aku baik", "Kamu sendiri gimana?")])
+        self.assertFalse(self.svc.session.awaiting_question)
+
+    def test_chatter_after_ask_back_gets_no_refusal(self):
+        self._script({"route": "obrolan", "response": "Kamu sudah makan?", "ask_back": True},
+                     {"route": "tolak_tidak_ada_info", "response": messages.MSG_NO_INFO})
+        self.hear("Brone, sudah makan belum?", "Jalanin lagi dari awal")
+        self.assertEqual(self.said(), ["Kamu sudah makan?"])
+
+    def test_ask_back_window_expires(self):
+        seen = self._script({"route": "obrolan", "response": "Kamu sudah makan?", "ask_back": True})
+        self.hear("Brone, sudah makan belum?")
+        self.svc.session.awaiting_since -= 60
+        self.hear("belum nih")
+        self.assertEqual(len(seen), 1)
+
+    def test_ignored_route_is_silent(self):
+        self._script({"route": "abaikan", "response": ""})
+        self.hear("Kalau udah bilang ya, Kak BRONE")
+        self.assertEqual(self.said(), [])
 
     def test_unaddressed_speech_is_ignored(self):
         self.hear("saya mau makan siang")

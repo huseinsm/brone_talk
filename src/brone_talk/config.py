@@ -153,6 +153,7 @@ class EngineSettings:
     context_chunks: int = 4  # BRONE_CONTEXT_CHUNKS
     max_tokens: int = 160  # BRONE_LLM_MAX_TOKENS
     grounding: bool = True  # BRONE_GROUNDING
+    chat_llm: bool = True  # BRONE_CHAT_LLM: obrolan di luar kb/smalltalk.yaml dijawab LLM persona
     server_wait_s: float = 120.0  # BRONE_SERVER_WAIT_SECONDS
 
 
@@ -165,7 +166,8 @@ class Settings:
     mai: MaiConfig = field(default_factory=MaiConfig)
     tts: TtsConfig = field(default_factory=TtsConfig)
     engine: EngineSettings = field(default_factory=EngineSettings)
-    await_s: float = 15.0  # BRONE_AWAIT_SECONDS: jendela pertanyaan lanjutan setelah "Ya?"
+    await_s: float = 0.0  # BRONE_AWAIT_SECONDS: jendela pertanyaan lanjutan setelah "Ya?"; 0 = mati
+    social_await_s: float = 8.0  # BRONE_SOCIAL_AWAIT_SECONDS: jendela satu tanggapan setelah Bron bertanya balik
     warmup_llm: bool = True  # BRONE_WARMUP_LLM
     log_level: str = "INFO"  # BRONE_LOG_LEVEL
     runtime_dir: Path = ROOT / "runtime"
@@ -269,6 +271,7 @@ class Settings:
             faq_min_sim=_float(env, "BRONE_FAQ_MIN_SIM", e.faq_min_sim),
             faq_min_margin=_float(env, "BRONE_FAQ_MIN_MARGIN", e.faq_min_margin),
             faq_stt_min_mean=_float(env, "BRONE_FAQ_STT_MIN_MEAN", e.faq_stt_min_mean),
+            chat_llm=_flag(env, "BRONE_CHAT_LLM", e.chat_llm),
             faq_stt_min_seg=_float(env, "BRONE_FAQ_STT_MIN_SEG", e.faq_stt_min_seg),
             faq_low_stt_min_sim=_float(env, "BRONE_FAQ_LOW_STT_MIN_SIM", e.faq_low_stt_min_sim),
             context_chars=_int(env, "BRONE_CONTEXT_CHARS", e.context_chars),
@@ -286,6 +289,7 @@ class Settings:
             tts=tts,
             engine=engine,
             warmup_llm=_flag(env, "BRONE_WARMUP_LLM", True),
-            await_s=_float(env, "BRONE_AWAIT_SECONDS", 15.0),
+            await_s=_float(env, "BRONE_AWAIT_SECONDS", 0.0),
+            social_await_s=_float(env, "BRONE_SOCIAL_AWAIT_SECONDS", 8.0),
             log_level=_str(env, "BRONE_LOG_LEVEL", "INFO").upper(),
         )

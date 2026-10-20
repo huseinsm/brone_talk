@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
+import yaml
 
 from brone_talk.engine.servers import Embedder
 from brone_talk.engine.entities import EntityMatcher, _YEAR_RE, wh_words
@@ -21,19 +22,31 @@ class FaqHit:
     margin: float
     rejected: list[tuple[str, float, str]] = field(default_factory=list)
 
+def load_smalltalk(path: Path) -> list[dict]:
+    """kb/smalltalk.yaml -> rekaman berbentuk FAQ (guard umum; satu jawaban dipilih acak per giliran)."""
+    if not path.is_file():
+        return []
+    rows = []
+    for o in (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("obrolan", []):
+        answers = [str(a).strip() for a in o["jawaban"]]
+        rows.append({"id": o["id"], "q": o["q"], "variasi": [str(v) for v in o.get("variasi", [])],
+                     "a": answers[0], "jawaban": answers, "guard": "umum", "entitas": None,
+                     "berlaku_hingga": None, "tanya_balik": bool(o.get("tanya_balik")),
+                     "ekspresi": o.get("ekspresi", "happy")})
+    return rows
+
 class FaqIndex:
-    def __init__(self, faq_path: Path, embedder: Embedder, entities: EntityMatcher,
-                 min_sim: float, min_margin: float) -> None:
+    def __init__(self, faq_path: Path | None, embedder: Embedder, entities: EntityMatcher,
+                 min_sim: float, min_margin: float, records: list[dict] | None = None) -> None:
         self.embedder = embedder
         self.entities = entities
         self.min_sim = min_sim
         self.min_margin = min_margin
         today = _dt.date.today().isoformat()
         self.faqs: list[dict] = []
-        for line in faq_path.read_text(encoding="utf-8").splitlines():
-            if not line.strip():
-                continue
-            f = json.loads(line)
+        if records is None:
+            records = [json.loads(line) for line in faq_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        for f in records:
             if f.get("berlaku_hingga") and str(f["berlaku_hingga"]) < today:
                 continue  # data basi tidak dijawab dari FAQ
             f["_roles"] = EntityMatcher.roles(f["q"])

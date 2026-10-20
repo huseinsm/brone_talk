@@ -1,10 +1,13 @@
 """Keputusan per ucapan: kapan robot diam, kapan minta diulang, kapan menjawab.
 
 Aturan (dari brone_talk.py v4, BroneTalkService.run):
-  - "Brone" disebut di mana pun dalam kalimat -> pertanyaannya dijawab langsung.
-  - Hanya nama ("Brone", "Halo Brone") -> jawab "Ya?", lalu ucapan berikutnya dianggap pertanyaan.
-  - Setelah "Ya?" -> SATU ucapan berikutnya tanpa nama dijawab, dalam jendela waktu
-    (BRONE_AWAIT_SECONDS). Setelah itu harus menyebut nama lagi.
+  - "Brone" di awal kalimat atau akhir ucapan -> pertanyaannya dijawab langsung. Nama di tengah
+    kalimat bukan panggilan (nlu.wake.call_text, 20 Okt 2026).
+  - Hanya nama ("Brone", "Halo Brone") -> bila BRONE_AWAIT_SECONDS > 0: jawab "Ya?", lalu SATU
+    ucapan berikutnya tanpa nama dijawab dalam jendela itu. Bawaan 0 (sejak 20 Okt 2026): robot
+    hanya mengingatkan agar nama disebut, ucapan tanpa nama tidak pernah dijawab.
+  - Bron bertanya balik ("Kamu sendiri sudah makan?") -> SATU ucapan berikutnya tanpa nama boleh
+    ditanggapi dalam BRONE_SOCIAL_AWAIT_SECONDS; bila ujungnya penolakan, Bron diam (app.py).
   - Tidak disebut nama dan tidak sedang menunggu -> diabaikan (standby).
   - Kata stop saat menunggu pertanyaan -> kembali standby.
 Tidak ada kunci penanya (sidik suara/arah): dihapus atas permintaan pengguna (19 Okt 2026).
@@ -14,6 +17,7 @@ decide() murni: tidak memanggil audio, LLM, atau MQTT. Efek samping ada di app.p
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from enum import Enum
 
@@ -42,10 +46,18 @@ class Session:
     awaiting_question: bool = False
     unclear_said: bool = False
     awaiting_since: float = 0.0  # time.monotonic() saat "Ya?" diucapkan
+    await_window: float = 0.0  # panjang jendela penantian ini (0 = pakai BRONE_AWAIT_SECONDS)
+    social: bool = False  # penantian ini dari pertanyaan balik Bron, bukan dari "Ya?"
+    bot_text: str = ""  # kata-kata Bron yang ditanggapi (untuk LLM obrolan)
+
+    def start_wait(self, window_s: float, social: bool = False, bot_text: str = "") -> None:
+        self.awaiting_question, self.awaiting_since, self.unclear_said = True, time.monotonic(), False
+        self.await_window, self.social, self.bot_text = window_s, social, bot_text
 
     def expire(self) -> None:
-        """Kunci penanya habis: penantian pertanyaan ikut berakhir."""
+        """Jendela penantian habis: ucapan berikutnya harus menyebut nama lagi."""
         self.awaiting_question = False
+        self.social = False
 
 
 def decide(text: str, *, called: bool, awaiting: bool) -> Outcome:

@@ -28,8 +28,35 @@ _HEAD_CALL_RE = re.compile(rf"^[\W_]*(?:(?:{_CALL})\b[\W_]*)*{_NAME}\b(?!\s*filk
 
 _TAIL_CALL_RE = re.compile(rf"\s*,\s*{_NAME}\s*([.!?]*)\s*$", re.I)
 
+_HEAD_NAME_RE = re.compile(rf"^[\W_]*(?:(?:{_CALL})\b[\W_]*)*{_NAME}\b", re.I)
+
+_TAIL_NAME_RE = re.compile(rf"\b{_NAME}[\W_]*$", re.I)
+
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+|\s*\n\s*")
+
+def call_text(text: str) -> str:
+    """Bagian ucapan yang memanggil Bron, atau "" bila nama tidak dipakai sebagai panggilan.
+
+    Panggilan = nama di awal kalimat (boleh didahului sapaan) atau di akhir ucapan:
+    "Brone, UB ada di mana?", "UB ada di mana, Brone?" -> utuh;
+    "Oke. Satu, dua. BRONE, siapa kamu?" -> "BRONE, siapa kamu?" (STT menggabung beberapa
+    kalimat dalam satu klip; yang dijawab mulai dari panggilan terakhir);
+    "kode BRONE talk itu", "Enggak, BRONE. Saya belum ke FIB. Oh, iya." -> "".
+    20 Okt 2026: tim menyebut "BRONE" di tengah obrolan kerja dan robot menjawab penolakan
+    18 kali sejak 19 Okt; sejak itu nama di tengah kalimat bukan panggilan.
+    """
+    text = (text or "").strip()
+    pieces = [p for p in _SENTENCE_SPLIT_RE.split(text) if p]
+    for i in range(len(pieces) - 1, -1, -1):
+        if _HEAD_NAME_RE.match(pieces[i]):
+            return " ".join(pieces[i:]) if i else text
+    return text if _TAIL_NAME_RE.search(text) else ""
+
+def addressed(text: str) -> bool:
+    return bool(call_text(text))
+
 def wake_question(text: str) -> str:
-    """Pertanyaan dari ucapan yang menyebut nama Bron di mana pun dalam kalimat.
+    """Pertanyaan dari ucapan yang memanggil Bron (lihat call_text untuk posisi nama).
 
     "Brone, UB ada di mana?" dan "UB ada di mana, Brone?" -> "UB ada di mana?";
     "Siapa yang membuat Brone?" -> utuh (nama di tengah kalimat bagian dari pertanyaan).

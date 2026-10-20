@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import json
+import random
 import re
 import time
 import urllib.error
@@ -16,16 +17,28 @@ from typing import Any
 from brone_talk.engine.util import norm_text, wait_for_server
 from brone_talk.engine.servers import Embedder, Reranker
 from brone_talk.engine.entities import EntityMatcher
-from brone_talk.engine.faq import FaqIndex
+from brone_talk.engine.faq import FaqIndex, load_smalltalk
 from brone_talk.engine.retrieval import HybridRetriever
-from brone_talk.engine.llm import LLMBackend, SYSTEM_PROMPT, parse_llm_json
+from brone_talk.engine.llm import CHAT_PROMPT, LLMBackend, SYSTEM_PROMPT, parse_llm_json
 from brone_talk.engine.grounding import grounding_problems
-from brone_talk.messages import MSG_MOTION, MSG_NOT_UNDERSTOOD, MSG_NO_INFO, MSG_SERVICE_DOWN
+from brone_talk.messages import MSG_CHAT_FALLBACK, MSG_MOTION, MSG_NOT_UNDERSTOOD, MSG_NO_INFO, MSG_SERVICE_DOWN
 from brone_talk.engine.util import LOG
 
 _MOTION_RE = re.compile(r"\b(me)?(lambai\w*|lambaikan|duduk|berdiri|jalan\w*|ikut\w*|wave|sit|stand|follow)\b", re.I)
 
 _MOTION_QUESTION_RE = re.compile(r"\b(bisa|dapat|mampu|apakah|kah)\b", re.I)
+
+_EXPRESSIONS = {"happy", "neutral", "sad", "excited", "confused"}
+
+# permintaan hiburan tidak pernah dikarang LLM: kata kunci -> id entri di kb/smalltalk.yaml
+_FUN_REQUESTS = [
+    ("pantun", re.compile(r"\bpantun\w*", re.I)),
+    ("tebak-tebakan", re.compile(r"\b(tebak[- ]?tebakan|teka[- ]?teki)\b", re.I)),
+    ("lelucon", re.compile(r"\b(lelucon|jokes?|lawak\w*|melucu|lucu-lucuan|bikin (aku )?ketawa)\b", re.I)),
+]
+
+# LLM obrolan kadang tetap memakai "aku"/"saya" untuk dirinya; tim memilih "Bron"
+_SELF_RE = re.compile(r"\b(aku|saya)\b", re.I)
 
 @dataclass
 class EngineConfig:
@@ -55,6 +68,8 @@ class EngineConfig:
     context_chars: int = 1400
     context_chunks: int = 4
     grounding: bool = True
+    smalltalk: bool = True  # kb/smalltalk.yaml: obrolan santai berjawaban tetap
+    chat_llm: bool = True  # obrolan di luar daftar dijawab LLM persona (bukan mode faq)
     startup_wait_s: float = 120.0
 
 class AnswerEngine:
@@ -66,6 +81,10 @@ class AnswerEngine:
         entities = json.loads((cfg.kb_dir / "entities.json").read_text(encoding="utf-8"))
         self.entities = EntityMatcher(entities)
         self.faq = FaqIndex(cfg.kb_dir / "faq.jsonl", self.embedder, self.entities, cfg.faq_min_sim, cfg.faq_min_margin)
+        chat = load_smalltalk(cfg.kb_dir / "smalltalk.yaml") if cfg.smalltalk else []
+        self.smalltalk = FaqIndex(None, self.embedder, self.entities, cfg.faq_min_sim, cfg.faq_min_margin,
+                                  records=chat) if chat else None
+        self._chat_by_id = {c["id"]: c for c in chat}
         self.retriever = HybridRetriever(cfg.kb_dir / "chunks.jsonl", self.embedder)
         self.cloud = LLMBackend("cloud", cfg.cloud_url, cfg.cloud_model, cfg.cloud_key, cfg.cloud_timeout_s,
                                 cfg.max_tokens, {"thinking": {"type": "disabled"}}) if cfg.cloud_key else None
@@ -81,13 +100,16 @@ class AnswerEngine:
         t0 = time.perf_counter()
         self.embedder.start(self.cfg.startup_wait_s)
         self.faq.build()
+        if self.smalltalk:
+            self.smalltalk.build()
         self.retriever.build()
         self.embedder.save()
         self.reranker.start(self.cfg.startup_wait_s)
         if self.cfg.mode in ("auto", "local") and not wait_for_server(self.cfg.local_url, self.cfg.startup_wait_s):
             LOG.warning("LLM lokal %s belum siap; cadangan lokal tidak tersedia sampai server hidup", self.cfg.local_url)
-        LOG.info("Mesin v4 siap dalam %.1fs: %d FAQ (%d kalimat), %d chunk, cloud=%s, mode=%s",
-                 time.perf_counter() - t0, len(self.faq.faqs), len(self.faq._texts), len(self.retriever.chunks),
+        LOG.info("Mesin v4 siap dalam %.1fs: %d FAQ (%d kalimat), %d obrolan, %d chunk, cloud=%s, mode=%s",
+                 time.perf_counter() - t0, len(self.faq.faqs), len(self.faq._texts),
+                 len(self.smalltalk.faqs) if self.smalltalk else 0, len(self.retriever.chunks),
                  "ya" if self.cloud else "tidak", self.cfg.mode)
 
     def reset(self) -> None:
@@ -107,18 +129,73 @@ class AnswerEngine:
         except OSError:
             pass
 
-    def _result(self, route: str, response: str, expression: str, rec: dict, t0: float) -> dict:
+    def _result(self, route: str, response: str, expression: str, rec: dict, t0: float,
+                ask_back: bool = False) -> dict:
         rec.update(route=route, response=response, total_ms=round((time.perf_counter() - t0) * 1000))
+        if ask_back:
+            rec["tanya_balik"] = True
         self._log(rec)
         LOG.info("v4 %s %dms: %r", route, rec["total_ms"], response[:120])
         return {"type": "question", "feature": "", "response": response, "expression": expression,
-                "route": route, "meta": rec}
+                "route": route, "ask_back": ask_back, "meta": rec}
 
     # -- inti
-    def answer(self, text: str, stt: dict | None = None) -> dict:
+    def _backends(self) -> list[LLMBackend]:
+        chosen = {"auto": [self.cloud, self.local], "cloud": [self.cloud], "local": [self.local]}[self.cfg.mode]
+        return [b for b in chosen if b is not None]
+
+    def _chat_or_refuse(self, text: str, replying_to: str, refusal_route: str, rec: dict, t0: float) -> dict:
+        """Tidak ada data UB untuk ucapan ini: obrolan santai dijawab LLM persona, permintaan info tetap ditolak.
+
+        20 Okt 2026: tim ingin Bron lebih ramah ("how are you", "sudah makan belum"), bukan hanya QnA.
+        LLM memilah jenis ucapan; jawaban obrolan tidak boleh memuat nama/angka yang tidak ada di ucapan.
+        """
+        if not self.cfg.chat_llm or self.cfg.mode == "faq":
+            return self._result(refusal_route, MSG_NO_INFO, "neutral", rec, t0)
+        user = f"UCAPAN: {text}"
+        if replying_to:
+            user = f"BRON SEBELUMNYA BERKATA: {replying_to}\n{user}"
+        messages = [{"role": "system", "content": CHAT_PROMPT}, {"role": "user", "content": user}]
+        parsed = None
+        for be in self._backends():
+            try:
+                raw, stats = be.chat(messages, temperature=0.7)
+                rec["chat_llm"] = {"backend": be.name, **stats}
+                parsed = parse_llm_json(raw)
+                if parsed is not None:
+                    break
+                rec.setdefault("chat_errors", []).append(f"{be.name}: JSON tidak valid {raw[:80]!r}")
+            except (OSError, urllib.error.URLError, ValueError, KeyError) as exc:
+                rec.setdefault("chat_errors", []).append(f"{be.name}: {str(exc)[:120]}")
+                LOG.warning("LLM obrolan %s gagal: %s", be.name, exc)
+        if parsed is None:
+            return self._result(refusal_route, MSG_NO_INFO, "neutral", rec, t0)
+        kind = str(parsed.get("jenis", "")).lower()
+        response = str(parsed.get("response", "")).strip()
+        rec["chat_kind"] = kind
+        if kind == "abaikan":
+            return self._result("abaikan", "", "neutral", rec, t0)
+        if kind != "obrolan" or not response:
+            return self._result(refusal_route, MSG_NO_INFO, "neutral", rec, t0)
+        problems = grounding_problems(response, "", text)
+        if problems:
+            rec["grounding"] = problems
+            rec["llm_response"] = response
+            return self._result("tolak_grounding_obrolan", MSG_CHAT_FALLBACK, "happy", rec, t0)
+        response = _SELF_RE.sub(lambda m: "Bron", response)
+        expression = str(parsed.get("expression", "happy")).lower()
+        if expression not in _EXPRESSIONS:
+            expression = "happy"
+        ask_back = bool(parsed.get("tanya_balik")) and response.endswith("?") and not replying_to
+        return self._result(f"obrolan_{rec['chat_llm']['backend']}", response, expression, rec, t0, ask_back)
+
+    def answer(self, text: str, stt: dict | None = None, replying_to: str = "") -> dict:
+        """replying_to: kata-kata Bron yang sedang ditanggapi (jendela tanya-balik), atau ""."""
         t0 = time.perf_counter()
         text = text.strip()
         rec: dict[str, Any] = {"ts": _dt.datetime.now().isoformat(timespec="seconds"), "text": text, "stt": stt}
+        if replying_to:
+            rec["replying_to"] = replying_to
         if len(norm_text(text)) < 2:
             return self._result("tidak_dimengerti", MSG_NOT_UNDERSTOOD, "confused", rec, t0)
 
@@ -133,7 +210,18 @@ class AnswerEngine:
         stt_ok, stt_note = self._stt_ok(stt)
         min_sim = None if stt_ok else self.cfg.faq_low_stt_min_sim
         rec["stt_gate"] = stt_note + (" -> FAQ boleh" if stt_ok else f" -> FAQ hanya bila skor >= {min_sim:.2f}")
+        fun = next((self._chat_by_id.get(cid) for cid, rx in _FUN_REQUESTS
+                    if self.smalltalk and rx.search(text)), None)
+        if fun:
+            rec["obrolan"] = {"id": fun["id"], "score": 1.0, "matched": "kata kunci"}
+            return self._result("obrolan", random.choice(fun["jawaban"]), fun["ekspresi"], rec, t0)
         hit = self.faq.match(text, qvec, min_sim)
+        # obrolan santai berjawaban tetap; menang bila skornya setara atau lebih tinggi dari FAQ
+        chat = self.smalltalk.match(text, qvec, min_sim) if self.smalltalk else None
+        if chat and (not hit or chat.score >= hit.score):
+            rec["obrolan"] = {"id": chat.faq["id"], "score": round(chat.score, 4), "matched": chat.matched}
+            return self._result("obrolan", random.choice(chat.faq["jawaban"]), chat.faq["ekspresi"], rec, t0,
+                                ask_back=chat.faq["tanya_balik"] and not replying_to)
         if hit:
             rec["faq"] = {"id": hit.faq["id"], "score": round(hit.score, 4), "matched": hit.matched,
                           "margin": round(hit.margin, 4), "rejected": hit.rejected}
@@ -164,7 +252,7 @@ class AnswerEngine:
         rec["retrieval_ms"] = round((time.perf_counter() - t1) * 1000)
         rec["top"] = [(self.retriever.chunks[i]["id"], round(s, 3)) for i, s in ranked[:5]]
         if not ranked or ranked[0][1] < self.cfg.rerank_min:
-            return self._result("tolak_tidak_ada_info", MSG_NO_INFO, "neutral", rec, t0)
+            return self._chat_or_refuse(text, replying_to, "tolak_tidak_ada_info", rec, t0)
 
         ctx_parts, used = [], 0
         for i, s in ranked[: self.cfg.context_chunks]:
@@ -180,9 +268,8 @@ class AnswerEngine:
                     {"role": "user", "content": f"KONTEKS:\n{context}\n\nPERTANYAAN: {text}"}]
 
         # 4. LLM: cloud lalu lokal
-        backends = {"auto": [self.cloud, self.local], "cloud": [self.cloud], "local": [self.local]}[self.cfg.mode]
         parsed, errors = None, []
-        for be in [b for b in backends if b is not None]:
+        for be in self._backends():
             try:
                 raw, stats = be.chat(messages)
                 rec["llm"] = {"backend": be.name, **stats}
@@ -206,7 +293,7 @@ class AnswerEngine:
         if expression not in {"happy", "neutral", "sad", "excited", "confused"}:
             expression = "neutral"
         if parsed.get("answerable") is False or not response:
-            return self._result("tolak_llm", MSG_NO_INFO, "neutral", rec, t0)
+            return self._chat_or_refuse(text, replying_to, "tolak_llm", rec, t0)
 
         # 5. grounding
         if self.cfg.grounding:
