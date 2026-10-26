@@ -118,8 +118,11 @@ class MaiConfig:
 @dataclass(frozen=True)
 class TtsConfig:
     piper_bin: str = str(Path(sys.executable).parent / "piper")  # BRONE_PIPER_BIN
-    voice_model: Path = ROOT / "models" / "voices" / "id_ID-news_tts-medium.onnx"  # BRONE_PIPER_VOICE
-    voice_config: Path = ROOT / "models" / "voices" / "id_ID-news_tts-medium.onnx.json"  # BRONE_PIPER_CONFIG
+    # Default sejak 26 Okt 2026: suara Bron fine-tune D21. Suara lama: deploy/tts_voice.sh lama
+    voice_model: Path = ROOT / "models" / "voices" / "id_ID-brone_D21-medium.onnx"  # BRONE_PIPER_VOICE
+    voice_config: Path = ROOT / "models" / "voices" / "id_ID-brone_D21-medium.onnx.json"  # BRONE_PIPER_CONFIG
+    # Kosong = pakai clean_for_speech (untuk suara lama news_tts)
+    textnorm_dir: str = str(ROOT / "models" / "voices" / "brone_D21_teks")  # BRONE_TTS_TEXTNORM: kosong = news_tts
 
 
 @dataclass(frozen=True)
@@ -239,6 +242,7 @@ class Settings:
             piper_bin=_str(env, "BRONE_PIPER_BIN", t.piper_bin),
             voice_model=Path(_str(env, "BRONE_PIPER_VOICE", str(t.voice_model))),
             voice_config=Path(_str(env, "BRONE_PIPER_CONFIG", str(t.voice_config))),
+            textnorm_dir=_str(env, "BRONE_TTS_TEXTNORM", t.textnorm_dir),
         )
         engine = EngineSettings(
             mode=_str(env, "BRONE_MODE", e.mode).lower(),

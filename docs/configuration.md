@@ -93,8 +93,9 @@ tidak dibawa ke sini; lihat `docs/decisions.md`.
 | Field | Default | Variabel env | Keterangan |
 |---|---|---|---|
 | `piper_bin` | `str(Path(sys.executable).parent / "piper")` | `BRONE_PIPER_BIN` |  |
-| `voice_model` | `ROOT / "models" / "voices" / "id_ID-news_tts-medium.onnx"` | `BRONE_PIPER_VOICE` |  |
-| `voice_config` | `ROOT / "models" / "voices" / "id_ID-news_tts-medium.onnx.json"` | `BRONE_PIPER_CONFIG` |  |
+| `voice_model` | `ROOT / "models" / "voices" / "id_ID-brone_D21-medium.onnx"` | `BRONE_PIPER_VOICE` |  |
+| `voice_config` | `ROOT / "models" / "voices" / "id_ID-brone_D21-medium.onnx.json"` | `BRONE_PIPER_CONFIG` |  |
+| `textnorm_dir` | `str(ROOT / "models" / "voices" / "brone_D21_teks")` | `BRONE_TTS_TEXTNORM` | : kosong = news_tts |
 
 ## Mesin jawaban (FAQ, RAG, reranker, LLM)
 

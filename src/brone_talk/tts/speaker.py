@@ -20,6 +20,7 @@ from scipy.io import wavfile
 from brone_talk.audio.devices import resolve_device
 from brone_talk.config import AudioConfig, TtsConfig
 from brone_talk.telemetry import Telemetry
+from brone_talk.tts.lexnorm import load_spoken
 from brone_talk.tts.normalize import clean_for_speech
 
 LOG = logging.getLogger("brone-talk")
@@ -40,6 +41,8 @@ class Speaker:
         self.piper_bin = Path(cfg.piper_bin)
         self.voice_model = cfg.voice_model
         self.voice_config = cfg.voice_config
+        # suara fine-tune D21 harus menerima teks berbentuk sama dengan transkrip training-nya
+        self.prepare = load_spoken(Path(cfg.textnorm_dir)) if cfg.textnorm_dir else clean_for_speech
         if not self.piper_bin.is_file():
             raise RuntimeError(f"Piper CLI tidak ditemukan: {self.piper_bin}")
         self.current_text = ""  # kalimat yang sedang diucapkan (penjaga wake word dari suara sendiri)
@@ -48,7 +51,7 @@ class Speaker:
         sd.check_output_settings(device=self.output_device, samplerate=self.sample_rate, channels=1, dtype="float32")
 
     def synthesize(self, text: str) -> tuple[Path, float, float]:
-        text = clean_for_speech(text)
+        text = self.prepare(text)
         if not text:
             raise ValueError("Tidak ada teks untuk disintesis")
         self.runtime_dir.mkdir(parents=True, exist_ok=True)
