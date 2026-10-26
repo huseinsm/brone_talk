@@ -57,6 +57,13 @@ AI-Center 25 Okt 2026). Kosong = mode lama (nama disebut di teks STT).
 
 - **MAI-Transcribe-2 utama, whisper cadangan.** Whisper dimuat sejak awal dan dipakai saat internet
   lambat atau Azure gagal. Batas tunggu MAI 3,5 detik; lewat itu, cloud dihentikan 30 detik.
+- **Pemantau internet (pilihan A, disepakati 22 Okt 2026, aktif 26 Okt 2026).** Penjaga latar
+  mengecek rute default OS (`/proc/net/route`) dan ping koneksi Voice Live tiap 5 detik
+  (`BRONE_MAI_KEEPALIVE_SECONDS`, balasan maks 2 detik). Gagal -> cloud ditandai offline, ucapan
+  berikutnya langsung ke whisper tanpa menunggu 3,5 detik. Probe tetap jalan; begitu ping/koneksi
+  baru berhasil, STT kembali ke MAI dan sisa istirahat 30 detik dibatalkan. Istirahat 401/402/403
+  (kunci/saldo) tidak di-probe. Biaya ~2,6 MB/hari; Azure menagih per audio, ping gratis. Bukan
+  dipilih: whisper paralel (B), C, D.
 - **Model whisper: `faster-whisper-small`** (produksi). README lama menyebut large-v3-turbo, tetapi
   drop-in aktif memakai small.
 - **Threads = 4.** Jumlah P-core fisik i7-1260P. Diukur: 12 threads ~1,8 detik per klip, 16 threads

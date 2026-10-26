@@ -74,6 +74,16 @@ def resolve_host(host: str, port: int, timeout_s: float) -> None:
         raise box["error"]
 
 
+def has_default_route(route_file: str = "/proc/net/route") -> bool:
+    """True bila OS punya rute default (WiFi/LAN tersambung). Tanpa /proc (bukan Linux) dianggap ada."""
+    try:
+        with open(route_file) as handle:
+            next(handle, None)  # baris judul kolom
+            return any(line.split()[1:2] == ["00000000"] for line in handle)
+    except OSError:
+        return True
+
+
 class Transcriber:
     def __init__(self, stt: SttConfig, mai: MaiConfig, telemetry: Telemetry) -> None:
         self.telemetry = telemetry
@@ -110,6 +120,12 @@ class Transcriber:
             # setelah gagal, cloud dilewati selama ini; kunci salah/saldo habis lebih lama
             self.mai_cooldown_s = mai.cooldown_s
             self.mai_auth_cooldown_s = mai.auth_cooldown_s
+            # Pemantau internet (pilihan A, disepakati 22 Okt 2026): penjaga mengecek rute default OS dan
+            # ping MAI tiap keepalive_s. Gagal -> cloud_online False, ucapan berikutnya langsung ke whisper
+            # tanpa menunggu timeout 3.5 s. Probe tetap jalan; berhasil -> kembali ke MAI.
+            self.mai_probe_timeout_s = mai.probe_timeout_s
+            self.cloud_online = True
+            self._mai_skip_auth = False
             env_phrases = [t.strip() for t in mai.phrases.split(",") if t.strip()]
             # "-" = tanpa phrase list (untuk uji banding)
             self.mai_phrases = [] if env_phrases == ["-"] else env_phrases or list(_MAI_PHRASES)
@@ -232,17 +248,18 @@ class Transcriber:
 
     def _transcribe_mai_or_whisper(self, audio_path: Path) -> str:
         """Cloud dulu; gagal apa pun (tanpa internet, timeout, HTTP error) -> whisper pada klip yang sama."""
-        if time.monotonic() >= self.mai_skip_until:
+        if self.cloud_online and time.monotonic() >= self.mai_skip_until:
             try:
                 self.last_raw = self._transcribe_mai(audio_path)
                 self.last_engine = "mai"
                 return _mai_fix(self.last_raw)
             except Exception as exc:
                 code = getattr(exc, "code", None) or getattr(getattr(exc, "__cause__", None), "code", None)
-                rest = self.mai_auth_cooldown_s if code in (401, 402, 403) else self.mai_cooldown_s
+                self._mai_skip_auth = code in (401, 402, 403)
+                rest = self.mai_auth_cooldown_s if self._mai_skip_auth else self.mai_cooldown_s
                 self.mai_skip_until = time.monotonic() + rest
-                LOG.warning("MAI-Transcribe gagal (%s); whisper lokal dipakai, cloud dicoba lagi %.0f s lagi",
-                            str(exc)[:160], rest)
+                LOG.warning("MAI-Transcribe gagal (%s); whisper lokal dipakai, cloud dicoba lagi saat ping "
+                            "berhasil (maks %.0f s)", str(exc)[:160], rest)
                 self.telemetry.stage("stt", "fallback", detail=str(exc)[:200])
         self.last_engine = "whisper"
         self.last_raw = self._transcribe_whisper(audio_path)
@@ -360,21 +377,52 @@ class Transcriber:
         self._vl_ws, self._vl_opened = ws, time.monotonic()
         return ws
 
+    def _set_cloud_online(self, online: bool, detail: str) -> None:
+        if online and not self._mai_skip_auth:
+            self.mai_skip_until = 0.0  # istirahat setelah ucapan gagal diakhiri probe yang berhasil
+        if online == self.cloud_online:
+            return
+        self.cloud_online = online
+        if online:
+            LOG.info("Internet pulih (%s): STT kembali ke MAI", detail)
+        else:
+            LOG.warning("Internet/MAI putus (%s): STT langsung whisper sampai ping berhasil", detail)
+        self.telemetry.stage("stt", "cloud_online" if online else "cloud_offline", detail=detail[:200])
+
+    def _ping(self, ws: Any) -> bool:
+        try:
+            return bool(ws.ping().wait(self.mai_probe_timeout_s))
+        except Exception:
+            return False
+
+    def _probe_cloud(self) -> None:
+        """Satu probe pemantau internet. Dipanggil penjaga tiap keepalive_s."""
+        if self._mai_skip_auth and time.monotonic() < self.mai_skip_until:
+            return  # kunci salah/saldo habis: jangan membanjiri Azure
+        if not has_default_route():
+            self._set_cloud_online(False, "tidak ada rute default")
+            return
+        if not self._vl_lock.acquire(blocking=False):
+            return  # koneksi sedang dipakai ucapan
+        try:
+            ws = self._vl_ws
+            fresh = ws is not None and time.monotonic() - self._vl_opened < self.mai_ws_max_age_s
+            if fresh and self._ping(ws):
+                self._set_cloud_online(True, "ping MAI")
+            else:
+                # koneksi tua/putus/ping tak dibalas: buka baru sekaligus menguji DNS+TLS+sesi
+                self._voicelive_open(self.mai_connect_timeout_s)
+                self._set_cloud_online(True, "koneksi MAI baru")
+        except Exception as exc:
+            self._voicelive_close()
+            self._set_cloud_online(False, str(exc)[:120] or type(exc).__name__)
+        finally:
+            self._vl_lock.release()
+
     def _voicelive_keeper(self) -> None:
-        """Latar: jaga satu koneksi Voice Live siap pakai. Dilewati saat cloud istirahat atau sedang dipakai."""
+        """Latar: pemantau internet + jaga satu koneksi Voice Live siap pakai."""
         while True:
-            if time.monotonic() >= self.mai_skip_until and self._vl_lock.acquire(blocking=False):
-                try:
-                    ws = self._vl_ws
-                    if ws is None or time.monotonic() - self._vl_opened >= self.mai_ws_max_age_s:
-                        self._voicelive_open(self.mai_connect_timeout_s)
-                    elif not ws.ping().wait(self.mai_connect_timeout_s):
-                        raise TimeoutError("ping tidak dibalas")
-                except Exception as exc:
-                    self._voicelive_close()
-                    LOG.debug("Koneksi Voice Live belum siap (%s)", str(exc)[:120])
-                finally:
-                    self._vl_lock.release()
+            self._probe_cloud()
             time.sleep(self.mai_keepalive_s)
 
     def _transcribe_voicelive(self, audio_path: Path) -> str:

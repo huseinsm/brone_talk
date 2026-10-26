@@ -76,7 +76,8 @@ tidak dibawa ke sini; lihat `docs/decisions.md`.
 | `timeout_s` | `3.5` | `BRONE_MAI_TIMEOUT_SECONDS` |  |
 | `connect_timeout_s` | `6.0` | `BRONE_MAI_CONNECT_TIMEOUT_SECONDS` |  |
 | `dns_timeout_s` | `1.5` | `BRONE_MAI_DNS_TIMEOUT_SECONDS` |  |
-| `keepalive_s` | `20.0` | `BRONE_MAI_KEEPALIVE_SECONDS` |  |
+| `keepalive_s` | `5.0` | `BRONE_MAI_KEEPALIVE_SECONDS` |  |
+| `probe_timeout_s` | `2.0` | `BRONE_MAI_PROBE_TIMEOUT_SECONDS` | : batas balasan ping |
 | `cooldown_s` | `30.0` | `BRONE_MAI_COOLDOWN_SECONDS` |  |
 | `auth_cooldown_s` | `600.0` | `BRONE_MAI_AUTH_COOLDOWN_SECONDS` |  |
 | `ws_max_age_s` | `600.0` | `BRONE_MAI_WS_MAX_AGE_SECONDS` |  |

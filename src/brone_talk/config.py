@@ -103,7 +103,9 @@ class MaiConfig:
     timeout_s: float = 3.5  # BRONE_MAI_TIMEOUT_SECONDS
     connect_timeout_s: float = 6.0  # BRONE_MAI_CONNECT_TIMEOUT_SECONDS
     dns_timeout_s: float = 1.5  # BRONE_MAI_DNS_TIMEOUT_SECONDS
-    keepalive_s: float = 20.0  # BRONE_MAI_KEEPALIVE_SECONDS
+    # Pemantau internet (26 Okt 2026): rute default + ping MAI tiap keepalive_s; gagal -> STT langsung whisper.
+    keepalive_s: float = 5.0  # BRONE_MAI_KEEPALIVE_SECONDS
+    probe_timeout_s: float = 2.0  # BRONE_MAI_PROBE_TIMEOUT_SECONDS: batas balasan ping
     cooldown_s: float = 30.0  # BRONE_MAI_COOLDOWN_SECONDS
     auth_cooldown_s: float = 600.0  # BRONE_MAI_AUTH_COOLDOWN_SECONDS
     ws_max_age_s: float = 600.0  # BRONE_MAI_WS_MAX_AGE_SECONDS
@@ -224,6 +226,7 @@ class Settings:
             connect_timeout_s=_float(env, "BRONE_MAI_CONNECT_TIMEOUT_SECONDS", m.connect_timeout_s),
             dns_timeout_s=_float(env, "BRONE_MAI_DNS_TIMEOUT_SECONDS", m.dns_timeout_s),
             keepalive_s=_float(env, "BRONE_MAI_KEEPALIVE_SECONDS", m.keepalive_s),
+            probe_timeout_s=_float(env, "BRONE_MAI_PROBE_TIMEOUT_SECONDS", m.probe_timeout_s),
             cooldown_s=_float(env, "BRONE_MAI_COOLDOWN_SECONDS", m.cooldown_s),
             auth_cooldown_s=_float(env, "BRONE_MAI_AUTH_COOLDOWN_SECONDS", m.auth_cooldown_s),
             ws_max_age_s=_float(env, "BRONE_MAI_WS_MAX_AGE_SECONDS", m.ws_max_age_s),
