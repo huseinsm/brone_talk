@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 import re
 import threading
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
 from pathlib import Path
 
 import numpy as np
@@ -21,7 +21,7 @@ import numpy as np
 LOG = logging.getLogger("brone-talk")
 KWS_CHUNK = 1280  # 80 ms @ 16 kHz, ukuran frame openWakeWord
 
-_SELF_WAKE_RE = re.compile(r"\bhal+o\b.*\bbro+n", re.I)
+_SELF_WAKE_RE = re.compile(r"\b(?:h?al+o+h?|hel+o)\b.*\bbro+n", re.I)  # halo/alo/haloh/hello ... bron
 
 
 class ChunkBuffer:
@@ -83,6 +83,21 @@ class WakeWord:
                 self.reset()
                 return True
         return False
+
+
+class WakeHeard(Exception):
+    """"halo brone" terdengar saat merekam pertanyaan di jendela percakapan (Bron harus "Ya?" lagi)."""
+
+
+def watch(blocks: Iterable[np.ndarray], detector: WakeWord) -> Iterator[np.ndarray]:
+    """Teruskan blok apa adanya ke perekam; WakeHeard bila "halo brone" terdengar di antaranya."""
+    detector.reset()
+    for samples in blocks:
+        if detector.feed(samples):
+            LOG.info("Wake word terdeteksi di jendela percakapan (skor=%.2f)", detector.last_score)
+            detector.reset()
+            raise WakeHeard()
+        yield samples
 
 
 def self_wake(spoken_text: str) -> bool:

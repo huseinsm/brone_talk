@@ -72,7 +72,7 @@ class AudioConfig:
     # Wake word "halo brone" (openWakeWord). Kosong = mode lama: nama disebut di teks STT.
     kws_model: str = ""  # BRONE_KWS_MODEL: path halo_brone.onnx
     kws_threshold: float = 0.5  # BRONE_KWS_THRESHOLD
-    kws_window_s: float = 8.0  # BRONE_KWS_WINDOW_SECONDS: jendela satu pertanyaan setelah "Ya?"
+    kws_window_s: float = 60.0  # BRONE_KWS_WINDOW_SECONDS: jendela percakapan tanpa wake word sejak "Ya?"
     kws_interrupt: bool = True  # BRONE_KWS_INTERRUPT: "halo brone" menghentikan jawaban
 
 

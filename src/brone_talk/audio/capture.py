@@ -24,6 +24,7 @@ from scipy.io import wavfile
 from brone_talk.audio.constants import SAMPLE_RATE, VAD_WINDOW
 from brone_talk.audio.devices import device_name, parse_card_nodes, resolve_device
 from brone_talk.audio.endpointing import CaptureLost, Endpointer, StopCapture, Utterance
+from brone_talk.audio.kws import WakeHeard, WakeWord, watch
 from brone_talk.audio.vad import SileroVad
 from brone_talk.config import AudioConfig
 
@@ -94,15 +95,21 @@ class Recorder:
         silence_limit = max(1, int(self.silence_s * SAMPLE_RATE / VAD_WINDOW))
         window_limit = max(1, int((self.max_duration_s + start_s) * SAMPLE_RATE / VAD_WINDOW))
         start_limit = int(start_s * SAMPLE_RATE / VAD_WINDOW)
-        endpointer = Endpointer(self.vad, self.telemetry, self.threshold, silence_limit, window_limit, start_limit)
+        speech_limit = max(1, int(self.max_duration_s * SAMPLE_RATE / VAD_WINDOW))
+        endpointer = Endpointer(self.vad, self.telemetry, self.threshold, silence_limit, window_limit, start_limit,
+                                speech_limit)
         return endpointer, window_limit
 
-    def record(self, start_s: float = 0.0) -> Capture | None:
-        """Satu ucapan. start_s > 0: menyerah (None) bila ucapan belum mulai dalam start_s detik."""
+    def record(self, start_s: float = 0.0, wake: WakeWord | None = None) -> Capture | None:
+        """Satu ucapan. start_s > 0: menyerah (None) bila ucapan belum mulai dalam start_s detik.
+
+        wake: model "halo brone" ikut mendengar selama merekam (jendela percakapan); terdengar ->
+        tunggu penutur diam lalu WakeHeard.
+        """
         self.vad.reset()
         if self.backend == "alsa":
-            return self._record_alsa(start_s)
-        return self._record_sounddevice(start_s)
+            return self._record_alsa(start_s, wake)
+        return self._record_sounddevice(start_s, wake)
 
     # -- aliran tanpa batas (wake word, interupsi) ---------------------------------
     def stream(self, stop: Event | None = None) -> Iterator[np.ndarray]:
@@ -184,17 +191,18 @@ class Recorder:
             yield np.frombuffer(raw, dtype="<i2").astype(np.float32) / 32768.0
 
     # -- jalur perekaman --------------------------------------------------------
-    def _record_sounddevice(self, start_s: float = 0.0) -> Capture | None:
+    def _record_sounddevice(self, start_s: float = 0.0, wake: WakeWord | None = None) -> Capture | None:
         endpointer, window_limit = self._endpointer(start_s)
         self.telemetry.stage("listening", "start", device=device_name(self.input_device), sample_rate=SAMPLE_RATE)
         LOG.info("Mendengarkan dari %s", device_name(self.input_device))
+        blocks = self._sounddevice_blocks(window_limit)
         try:
-            utt = endpointer.run(self._sounddevice_blocks(window_limit))
+            utt = endpointer.run(watch(blocks, wake) if wake else blocks)
         except StopCapture:
             return None
         return self._finish(utt)
 
-    def _record_alsa(self, start_s: float = 0.0) -> Capture | None:
+    def _record_alsa(self, start_s: float = 0.0, wake: WakeWord | None = None) -> Capture | None:
         endpointer, window_limit = self._endpointer(start_s)
         cards = Path("/proc/asound/cards").read_text(encoding="utf-8")
         pw_node = self._select_pw_node(cards)
@@ -202,15 +210,24 @@ class Recorder:
         LOG.info("Mendengarkan dari ALSA %s", self.alsa_device)
         process = self._spawn_arecord(pw_node)
         utt: Utterance | None = None
-        stopped = lost = False
+        stopped = lost = woke = False
         try:
-            utt = endpointer.run(self._pipe_blocks(process, window_limit))
+            blocks = self._pipe_blocks(process, window_limit)
+            utt = endpointer.run(watch(blocks, wake) if wake else blocks)
         except StopCapture:
             stopped = True
         except CaptureLost:
             lost = True
+        except WakeHeard:
+            woke = True
+            try:  # sisa ucapan setelah "halo brone" dibuang, sama seperti saat bangun dari tidur
+                self._settle(self._pipe_blocks(process, window_limit))
+            except (StopCapture, CaptureLost):
+                pass
         finally:
             self._kill(process)
+        if woke:
+            raise WakeHeard()
         if stopped:
             return None
         if lost:
@@ -218,7 +235,7 @@ class Recorder:
             if device:
                 LOG.warning("Capture %s gagal, coba %s", self.alsa_device, device)
                 self.alsa_device = device
-                return self._record_alsa(start_s)
+                return self._record_alsa(start_s, wake)
             raise RuntimeError("arecord berhenti sebelum satu window audio diterima")
         return self._finish(utt)
 

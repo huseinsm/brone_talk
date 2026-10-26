@@ -4,11 +4,12 @@ Urutan per ucapan:
   rekam -> STT -> panggilan (nama di awal/akhir) -> filter sampah -> keputusan (session.decide)
   -> jawaban jam (tanpa LLM) atau mesin jawaban -> TTS.
 
-Mode wake word (BRONE_KWS_MODEL diisi, desain 23 Okt 2026):
-  tidur -> model KWS mendengar "halo brone" -> tunggu jeda -> "Ya?" -> SATU pertanyaan dalam
-  BRONE_KWS_WINDOW_SECONDS (tanpa harus menyebut nama) -> jawab -> tidur. STT hanya jalan setelah
-  bangun. Selama Bron berpikir/berbicara, "halo brone" lagi = interupsi: jawaban dibatalkan, "Ya?".
-  Tanggapan atas tanya-balik Bron tetap diterima tanpa wake word (Session.social).
+Mode wake word (BRONE_KWS_MODEL diisi, desain 23 Okt 2026, jendela percakapan 26 Okt 2026):
+  tidur -> model KWS mendengar "halo brone" -> tunggu jeda -> "Ya?" -> jendela percakapan
+  BRONE_KWS_WINDOW_SECONDS (60 s) sejak "Ya?": SEMUA pertanyaan di dalamnya dijawab tanpa menyebut
+  nama -> jendela habis -> tidur. "halo brone" di dalam jendela = "Ya?" lagi dan jendela dimulai ulang.
+  STT hanya jalan setelah bangun. Selama Bron berpikir/berbicara, "halo brone" = interupsi: jawaban
+  dibatalkan, "Ya?". Tanya-balik Bron memberi minimal BRONE_SOCIAL_AWAIT_SECONDS untuk menanggapi.
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ from typing import Any
 
 from brone_talk import messages
 from brone_talk.audio.capture import Recorder
-from brone_talk.audio.kws import InterruptMonitor, WakeWord
+from brone_talk.audio.kws import InterruptMonitor, WakeHeard, WakeWord, self_wake
 from brone_talk.audio.vad import SileroVad
 from brone_talk.config import Settings
 from brone_talk.engine.answer import AnswerEngine, EngineConfig
@@ -96,6 +97,7 @@ class TalkService:
         # pemantau interupsi berjalan di thread lain, jadi memakai instance model sendiri
         self.kws_interrupt = WakeWord(Path(a.kws_model), a.kws_threshold) if a.kws_model and a.kws_interrupt else None
         self._woken = False  # interupsi barusan: langsung "Ya?" tanpa menunggu wake word lagi
+        self._convo_until = 0.0  # time.monotonic() akhir jendela percakapan (mode KWS)
         self._interrupt: threading.Event | None = None  # diset pemantau saat jawaban sedang berjalan
         self._answer_thread: threading.Thread | None = None
 
@@ -227,14 +229,18 @@ class TalkService:
             self._reply(outcome, text)
 
     def _turn_kws(self) -> None:
-        """Mode wake word: tidur -> "halo brone" -> "Ya?" -> satu pertanyaan -> jawab -> tidur."""
+        """Mode wake word: tidur -> "halo brone" -> "Ya?" -> pertanyaan-pertanyaan dalam jendela -> tidur."""
         session = self.session
         if not session.awaiting_question:
             if not self._woken and not self.recorder.wait_for_wake(self.kws):
                 return
             self._woken = False
             self._wake_confirm(reason="wake_word")
-        heard = self._hear(start_s=self._remaining_window())
+        try:
+            heard = self._hear(start_s=self._remaining_window(), wake=self.kws)
+        except WakeHeard:  # "halo brone" lagi di dalam jendela
+            self._wake_confirm(reason="wake_word")
+            return
         if heard is None:
             return
         text, called = heard
@@ -242,20 +248,40 @@ class TalkService:
         if outcome.decision is Decision.STOP:
             self.speaker.say(messages.SAY_STOP, "neutral")
             session.end_wait()
+            self._convo_until = 0.0
             self.telemetry.stage("idle", "standby", reason="voice_stop")
             return
-        if outcome.decision is Decision.CONFIRM:  # "halo brone" lagi di jendela pertanyaan
-            self._wake_confirm(reason="wake_text")
-            return
-        if not session.social:
-            self._clear_conversation()
+        if outcome.decision is Decision.CONFIRM:
+            if self_wake(text):  # cadangan bila model KWS melewatkan "halo brone"
+                self._wake_confirm(reason="wake_text")
+                return
+            # nama di ujung tanpa "halo" ("Udah, BRONE.") bukan panggilan ulang: tanggapi utuh
+            outcome = Outcome(Decision.ANSWER, question=text)
+        # riwayat (pertanyaan sebelumnya) tetap dipakai sepanjang jendela; dikosongkan saat "Ya?"
         self._reply_interruptible(outcome, text)
+        if not self._woken:
+            self._continue_conversation()
 
     def _wake_confirm(self, reason: str) -> None:
         self._clear_conversation()
         self.speaker.say(messages.SAY_CONFIRM, "happy")
-        self.session.start_wait(self.settings.audio.kws_window_s)
+        window = self.settings.audio.kws_window_s
+        self.session.start_wait(window)
+        self._convo_until = time.monotonic() + window
         self.telemetry.stage("idle", "awaiting_question", reason=reason)
+
+    def _continue_conversation(self) -> None:
+        """Setelah menjawab: sisa jendela percakapan tetap terbuka tanpa wake word; habis -> tidur."""
+        s = self.session
+        left = self._convo_until - time.monotonic()
+        if s.awaiting_question:  # Bron bertanya balik: jendela = yang lebih panjang
+            s.await_window = max(s.await_window, left)
+            return
+        if left > 1.0:
+            s.start_wait(left)
+            self.telemetry.stage("idle", "awaiting_question", reason="percakapan")
+            return
+        self.telemetry.stage("idle", "standby", reason="jendela_habis")
 
     def _remaining_window(self) -> float:
         s = self.session
@@ -287,9 +313,12 @@ class TalkService:
             self._woken = True
 
     # -- dengar: rekam -> STT -> panggilan -> filter sampah ---------------------------
-    def _hear(self, start_s: float = 0.0) -> tuple[str, bool] | None:
-        """(teks, dipanggil) dari satu ucapan, atau None bila tidak ada yang perlu diputuskan."""
-        text = self._record_and_transcribe(start_s)
+    def _hear(self, start_s: float = 0.0, wake: WakeWord | None = None) -> tuple[str, bool] | None:
+        """(teks, dipanggil) dari satu ucapan, atau None bila tidak ada yang perlu diputuskan.
+
+        wake: model KWS ikut mendengar selama merekam; "halo brone" -> WakeHeard (diteruskan).
+        """
+        text = self._record_and_transcribe(start_s, wake)
         if not text:
             return None
         if NAME_RE.search(text):
@@ -317,9 +346,11 @@ class TalkService:
         LOG.info("Gema kalimat prompt dibuang: %r -> %r", text[:120], cleaned[:120])
         return self._addressing(cleaned)
 
-    def _record_and_transcribe(self, start_s: float = 0.0) -> str:
+    def _record_and_transcribe(self, start_s: float = 0.0, wake: WakeWord | None = None) -> str:
         try:
-            capture = self.recorder.record(start_s)
+            capture = self.recorder.record(start_s, wake) if wake else self.recorder.record(start_s)
+        except WakeHeard:
+            raise
         except Exception as exc:
             self.telemetry.stage("error", "audio", detail=str(exc)[:200])
             LOG.exception("Perekaman gagal")

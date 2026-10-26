@@ -1,5 +1,5 @@
-"""Wake word "halo brone": ChunkBuffer, WakeWord (skor palsu), Endpointer start_limit, dan alur
-TalkService mode KWS (tidur -> "Ya?" -> satu pertanyaan -> tidur, interupsi) dengan komponen palsu.
+"""Wake word "halo brone": ChunkBuffer, WakeWord (skor palsu), Endpointer start/speech_limit, dan alur
+TalkService mode KWS (tidur -> "Ya?" -> jendela percakapan -> tidur, interupsi) dengan komponen palsu.
 """
 
 import tempfile
@@ -14,7 +14,7 @@ from brone_talk import messages
 from brone_talk.app import TalkService
 from brone_talk.audio.constants import VAD_WINDOW
 from brone_talk.audio.endpointing import Endpointer
-from brone_talk.audio.kws import KWS_CHUNK, ChunkBuffer, InterruptMonitor, WakeWord, self_wake
+from brone_talk.audio.kws import KWS_CHUNK, ChunkBuffer, InterruptMonitor, WakeHeard, WakeWord, self_wake, watch
 from brone_talk.config import Settings
 from brone_talk.session import Session
 from test_app_flow import FakeCapture, FakeEngine, FakeTelemetry, FakeTranscriber
@@ -52,6 +52,8 @@ class WakeWordTest(unittest.TestCase):
     def test_self_wake_guard(self):
         self.assertTrue(self_wake("Halo, saya Brone!"))
         self.assertTrue(self_wake("hallo bron"))
+        self.assertTrue(self_wake("Alo, BRONE."))
+        self.assertFalse(self_wake("Udah, BRONE."))
         self.assertFalse(self_wake("Brone siap membantu."))
         self.assertFalse(self_wake(""))
 
@@ -72,6 +74,22 @@ class EndpointerStartLimitTest(unittest.TestCase):
         utt = ep.run(block() for _ in range(100))
         self.assertEqual(utt.frames, [])
         self.assertEqual(utt.speech_end, 10 * VAD_WINDOW)
+
+    def test_speech_limit_counts_from_speech_start(self):
+        probs = [0.0] * 30 + [0.9] * 200
+        ep = Endpointer(self.Vad(probs), FakeTelemetry(), 0.5, silence_limit=3, window_limit=500, start_limit=40,
+                        speech_limit=50)
+        utt = ep.run(block() for _ in range(500))
+        self.assertEqual(utt.speech_end, (30 + 50 + 1) * VAD_WINDOW)
+
+    def test_watch_raises_when_wake_word_heard(self):
+        scores = iter([0.1, 0.9])
+        ww = WakeWord(Path("x.onnx"), 0.5, predictor=lambda chunk: next(scores))
+        passed = []
+        with self.assertRaises(WakeHeard):
+            for b in watch(iter([block() for _ in range(10)]), ww):
+                passed.append(b)
+        self.assertEqual(len(passed), 4)  # potongan ke-2 lengkap di blok ke-5
 
     def test_speech_started_in_time_runs_past_start_limit(self):
         probs = [0.0] * 5 + [0.9] * 20 + [0.0] * 3
@@ -109,9 +127,12 @@ class KwsRecorder:
     def wait_for_wake(self, detector):
         return self.wakes.pop(0) if self.wakes else False
 
-    def record(self, start_s=0.0):
+    def record(self, start_s=0.0, wake=None):
         self.starts.append(start_s)
-        return self.queue.pop(0) if self.queue else None
+        item = self.queue.pop(0) if self.queue else None
+        if item == "WAKE":  # "halo brone" terdengar selama merekam di jendela percakapan
+            raise WakeHeard()
+        return item
 
     def wait_silence(self):
         self.silences += 1
@@ -152,7 +173,7 @@ class KwsFlowTest(unittest.TestCase):
         svc.runtime_dir = self.dir
         svc.kws = WakeWord(Path("x.onnx"), 0.5, predictor=lambda chunk: 0.0)
         svc.kws_interrupt = None
-        svc._woken, svc._interrupt, svc._answer_thread = False, None, None
+        svc._woken, svc._interrupt, svc._answer_thread, svc._convo_until = False, None, None, 0.0
 
     def tearDown(self):
         self._tmp.cleanup()
@@ -170,15 +191,56 @@ class KwsFlowTest(unittest.TestCase):
         self.assertEqual(self.svc.speaker.said, [])
         self.assertEqual(self.svc.transcriber.queue, ["Brone, UB ada di mana?"])
 
-    def test_wake_then_one_question_without_name(self):
+    def test_window_answers_many_questions_without_wake_word(self):
         self.svc.recorder.wakes = [True]
         self.queue("siapa rektor UB sekarang", "dan dekan FILKOM siapa")
         self.svc.turn()
         self.assertEqual(self.svc.speaker.said, [messages.SAY_CONFIRM, "JAWAB siapa rektor UB sekarang"])
-        self.assertAlmostEqual(self.svc.recorder.starts[0], 8.0, delta=0.5)
+        self.assertAlmostEqual(self.svc.recorder.starts[0], 60.0, delta=0.5)
+        self.assertTrue(self.svc.session.awaiting_question)  # jendela 60 s masih terbuka
+        self.svc.turn()  # tanpa wake word
+        self.assertEqual(self.svc.engine.calls, ["siapa rektor UB sekarang", "dan dekan FILKOM siapa"])
+        self.assertLess(self.svc.recorder.starts[1], 60.0)  # sisa jendela, bukan 60 s baru
+
+    def test_window_over_goes_back_to_sleep(self):
+        self.svc.recorder.wakes = [True]
+        self.queue("siapa rektor UB sekarang", "obrolan setelah jendela")
+        self.svc.turn()
+        self.svc._convo_until = time.monotonic() - 1  # jendela habis selagi menjawab
+        self.svc.session.end_wait()
+        self.svc._continue_conversation()
         self.assertFalse(self.svc.session.awaiting_question)
-        self.svc.turn()  # tanpa wake word lagi: ucapan berikutnya tidak didengar
+        self.svc.turn()  # tidur: wake word tidak terdengar -> ucapan tidak diproses
         self.assertEqual(self.svc.engine.calls, ["siapa rektor UB sekarang"])
+
+    def test_halo_brone_inside_window_says_ya_again_and_restarts(self):
+        svc = self.svc
+        svc.recorder.wakes = [True]
+        self.queue("siapa rektor UB sekarang")
+        svc.recorder.queue.append("WAKE")
+        svc.turn()
+        first_until = svc._convo_until
+        time.sleep(0.01)
+        svc.turn()  # "halo brone" terdengar oleh KWS saat merekam
+        self.assertEqual(svc.speaker.said, [messages.SAY_CONFIRM, "JAWAB siapa rektor UB sekarang",
+                                            messages.SAY_CONFIRM])
+        self.assertGreater(svc._convo_until, first_until)
+        self.assertTrue(svc.session.awaiting_question)
+
+    def test_name_at_end_without_halo_is_not_a_new_wake(self):
+        self.svc.recorder.wakes = [True]
+        self.queue("Udah, BRONE.")
+        self.svc.turn()
+        self.assertEqual(self.svc.speaker.said[0], messages.SAY_CONFIRM)
+        self.assertEqual(len(self.svc.engine.calls), 1)  # dijawab, bukan "Ya?" kedua
+        self.assertNotEqual(self.svc.speaker.said[-1], messages.SAY_CONFIRM)
+
+    def test_halo_brone_text_fallback_says_ya(self):
+        self.svc.recorder.wakes = [True]
+        self.queue("Alo, BRONE.")
+        self.svc.turn()
+        self.assertEqual(self.svc.speaker.said, [messages.SAY_CONFIRM, messages.SAY_CONFIRM])
+        self.assertEqual(self.svc.engine.calls, [])
 
     def test_wake_then_silence_goes_back_to_sleep_quietly(self):
         self.svc.recorder.wakes = [True]
@@ -232,7 +294,8 @@ class KwsFlowTest(unittest.TestCase):
         self.assertTrue(svc.session.social)
         svc.turn()
         self.assertEqual(svc.speaker.said[-1], "Syukurlah.")
-        self.assertFalse(svc.session.awaiting_question)
+        self.assertFalse(svc.session.social)  # kembali ke jendela percakapan biasa
+        self.assertTrue(svc.session.awaiting_question)
 
 
 if __name__ == "__main__":

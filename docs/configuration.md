@@ -41,7 +41,7 @@ tidak dibawa ke sini; lihat `docs/decisions.md`.
 | `noise_stationary` | `False` | `BRONE_NOISE_STATIONARY` |  |
 | `kws_model` | `""` | `BRONE_KWS_MODEL` | : path halo_brone.onnx |
 | `kws_threshold` | `0.5` | `BRONE_KWS_THRESHOLD` |  |
-| `kws_window_s` | `8.0` | `BRONE_KWS_WINDOW_SECONDS` | : jendela satu pertanyaan setelah "Ya?" |
+| `kws_window_s` | `60.0` | `BRONE_KWS_WINDOW_SECONDS` | : jendela percakapan tanpa wake word sejak "Ya?" |
 | `kws_interrupt` | `True` | `BRONE_KWS_INTERRUPT` | : "halo brone" menghentikan jawaban |
 
 ## STT (whisper lokal)
