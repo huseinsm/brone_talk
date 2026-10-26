@@ -36,8 +36,16 @@ AI-Center 25 Okt 2026). Kosong = mode lama (nama disebut di teks STT).
 
 - **Bangun hanya lewat model KWS**, tidak lewat teks. STT (MAI/whisper) baru jalan setelah bangun,
   jadi biaya MAI turun dan obrolan sekitar tidak pernah ditranskripsi.
-- **Satu pertanyaan per bangun.** Alur: tidur -> "halo brone" -> tunggu jeda bicara -> "Ya?" ->
-  satu pertanyaan dalam `BRONE_KWS_WINDOW_SECONDS` (8 s, tanpa menyebut nama) -> jawab -> tidur.
+- **Jendela percakapan 60 s (diminta pengguna 26 Okt 2026, menggantikan "satu pertanyaan per bangun").**
+  Alur: tidur -> "halo brone" -> tunggu jeda bicara -> "Ya?" -> semua pertanyaan dalam
+  `BRONE_KWS_WINDOW_SECONDS` (60 s sejak "Ya?") dijawab tanpa menyebut nama -> jendela habis -> tidur.
+  Riwayat (pertanyaan sebelumnya) tetap dipakai di dalam jendela dan dikosongkan setiap "Ya?".
+  Tanya-balik Bron memberi minimal `BRONE_SOCIAL_AWAIT_SECONDS` walau sisa jendela lebih pendek.
+- **"halo brone" di dalam jendela = "Ya?" lagi**, dan jendela dimulai ulang. Model KWS ikut mendengar
+  aliran rekaman di jendela (`audio.kws.watch`). Cadangan dari teks hanya untuk "halo/alo/hello ... bron".
+  Nama di ujung tanpa sapaan ("Udah, BRONE.") ditanggapi sebagai ucapan biasa, bukan panggilan ulang.
+- **Panjang ucapan dihitung sejak ucapan mulai** (`BRONE_MAX_UTTERANCE_SECONDS`), bukan sejak rekaman
+  dibuka. Sebelumnya sisa jendela ikut ditambahkan, sehingga ucapan bisa ~16 s.
   Ucapan sebelum "Ya?" dibuang (tidak ada "halo brone, <pertanyaan>" sekali napas). Tidak bicara
   dalam jendela = tidur lagi tanpa suara.
 - **"halo brone" juga interupsi** (`BRONE_KWS_INTERRUPT`, menggantikan rencana "Brone stop"):
@@ -55,6 +63,10 @@ AI-Center 25 Okt 2026). Kosong = mode lama (nama disebut di teks STT).
 
 ## STT
 
+- **Tenggat MAI total (26 Okt 2026).** `BRONE_MAI_TIMEOUT_SECONDS` (3,5 s) kini berlaku untuk
+  seluruh upaya cloud: menunggu kunci probe, membuka koneksi, kirim, dan menunggu transkrip. Panggilan
+  berjalan di thread; lewat tenggat, klip langsung ke whisper. Sebelumnya batasnya per fase, dan STT
+  tercatat 7-26 s saat internet goyah.
 - **MAI-Transcribe-2 utama, whisper cadangan.** Whisper dimuat sejak awal dan dipakai saat internet
   lambat atau Azure gagal. Batas tunggu MAI 3,5 detik; lewat itu, cloud dihentikan 30 detik.
 - **Pemantau internet (pilihan A, disepakati 22 Okt 2026, aktif 26 Okt 2026).** Penjaga latar
