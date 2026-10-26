@@ -75,6 +75,20 @@ class OfflineSkipTest(unittest.TestCase):
 
 
 class ProbeTest(unittest.TestCase):
+    def test_mai_total_deadline_falls_back_to_whisper(self):
+        t = make()
+        t.mai_timeout_s = 0.2
+
+        def slow(path):
+            time.sleep(1.0)  # mis. menunggu kunci probe + kirim di jaringan lambat
+            return "terlambat"
+
+        t._transcribe_mai = slow
+        started = time.monotonic()
+        self.assertEqual(t._transcribe_mai_or_whisper(Path("x.wav")), "whisper")
+        self.assertLess(time.monotonic() - started, 0.6)
+        self.assertGreater(t.mai_skip_until, time.monotonic())
+
     def test_no_route_marks_offline(self):
         t = make()
         with mock.patch.object(tr, "has_default_route", return_value=False):

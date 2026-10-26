@@ -250,7 +250,7 @@ class Transcriber:
         """Cloud dulu; gagal apa pun (tanpa internet, timeout, HTTP error) -> whisper pada klip yang sama."""
         if self.cloud_online and time.monotonic() >= self.mai_skip_until:
             try:
-                self.last_raw = self._transcribe_mai(audio_path)
+                self.last_raw = self._mai_within_deadline(audio_path)
                 self.last_engine = "mai"
                 return _mai_fix(self.last_raw)
             except Exception as exc:
@@ -264,6 +264,31 @@ class Transcriber:
         self.last_engine = "whisper"
         self.last_raw = self._transcribe_whisper(audio_path)
         return self.last_raw
+
+    def _mai_within_deadline(self, audio_path: Path) -> str:
+        """_transcribe_mai dengan SATU tenggat total BRONE_MAI_TIMEOUT_SECONDS sejak ucapan selesai.
+
+        26 Okt 2026: batas lama hanya per fase (menunggu kunci probe, buka koneksi, kirim, tunggu transkrip),
+        sehingga STT tercatat 7-26 s saat internet goyah. Panggilan cloud kini jalan di thread; lewat tenggat,
+        thread itu ditinggalkan (selesai/gagal sendiri di latar) dan klip langsung ke whisper.
+        """
+        box: dict[str, Any] = {}
+        done = Event()
+
+        def run() -> None:
+            try:
+                box["text"] = self._transcribe_mai(audio_path)
+            except BaseException as exc:  # noqa: BLE001 - diteruskan ke thread utama
+                box["error"] = exc
+            finally:
+                done.set()
+
+        Thread(target=run, name="mai-stt", daemon=True).start()
+        if not done.wait(self.mai_timeout_s):
+            raise TimeoutError(f"tidak ada transkrip dalam {self.mai_timeout_s:.1f} s (total)")
+        if "error" in box:
+            raise box["error"]
+        return box["text"]
 
     def _transcribe_mai(self, audio_path: Path) -> str:
         if self.mai_provider == "voicelive":
