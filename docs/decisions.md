@@ -19,15 +19,16 @@ NUC. Kalau mau mengubahnya, ukur ulang di hardware yang sama dulu.
 
 Kunci penanya (sidik suara CAM++ dan arah SRP-PHAT, 12 Okt 2026) **dinonaktifkan atas permintaan
 pengguna**. Pertanyaan lanjutan tanpa nama membuat robot menjawab suara orang lain yang kebetulan
-cocok dengan penanya sebelumnya, dan tidak sesuai harapan. Kode `speaker_lock/` masih ada tetapi
-tidak dipanggil (`BRONE_LOCK=0`, default kini nonaktif).
+cocok dengan penanya sebelumnya, dan tidak sesuai harapan. Kode `speaker_lock/` serta env `BRONE_LOCK`
+dan `BRONE_DOA_*` sudah dihapus (commit `82b0efe`, 20 Okt 2026).
 
-## Panggilan dan jendela "Ya?"
+## Panggilan lewat teks (mode cadangan, `BRONE_KWS_MODEL` kosong)
 
-- Setiap pertanyaan harus memuat "Brone". Tidak ada lagi mode terkunci.
-- Hanya "Brone" tanpa pertanyaan: robot menjawab "Ya?". Ucapan berikutnya **satu kali** saja
-  dijawab tanpa nama, dalam jendela `BRONE_AWAIT_SECONDS` (15 detik). Setelah itu harus menyebut
-  "Brone" lagi.
+- Nama dihitung sebagai panggilan hanya di **awal kalimat** atau **akhir ucapan** (20 Okt 2026).
+  Nama di tengah obrolan ("Kalau udah bilang ya, Kak BRONE, ...") tidak membangunkan Bron.
+- `BRONE_AWAIT_SECONDS=0`: nama saja dijawab dengan ajakan menyebut pertanyaan, tanpa "Ya?" dan
+  tanpa pertanyaan lanjutan tanpa nama.
+- Produksi memakai wake word (bagian berikut); mode ini hanya cadangan.
 
 ## Wake word "halo brone" (KWS, disepakati 23 Okt 2026)
 
@@ -97,6 +98,10 @@ AI-Center 25 Okt 2026). Kosong = mode lama (nama disebut di teks STT).
   misalnya "wakil rektor" dijawab FAQ "rektor", atau "rektor tahun 2010" dijawab rektor sekarang.
 - **Grounding.** Angka dan nama di jawaban LLM harus ada di konteks atau pertanyaan. Bila tidak, jawaban
   diganti penolakan. Ini mencegah LLM mengarang fakta yang tidak ada di KB.
+- **Data bertanggal tidak boleh mati diam-diam.** FAQ/chunk yang lewat `berlaku_hingga` tidak dipakai
+  (pertanyaannya ditolak). FAQ wisuda sempat basi 11-26 Okt 2026 tanpa ada yang tahu, jadi kini
+  service mencatat peringatan `KB: ...` saat start (basi dan basi dalam 14 hari), dan `make kb-check`
+  menampilkan daftar yang sama.
 - **Tidak ada semantic cache.** Jawaban LLM tidak disimpan untuk dipakai ulang, supaya tidak ada
   jawaban basi.
 - **Cloud 5 detik** (produksi). Kode lama default 8 detik. Lewat batas, pindah ke LLM lokal.
@@ -105,8 +110,8 @@ AI-Center 25 Okt 2026). Kosong = mode lama (nama disebut di teks STT).
 
 ## Percakapan (session.py)
 
-- **Panggilan di mana pun dalam kalimat.** "Brone, UB di mana?" dan "UB di mana, Brone?" keduanya
-  menjawab. "BRONE FILKOM" adalah nama proyek, bukan panggilan.
+- **Panggilan di awal kalimat atau akhir ucapan (mode teks).** "Brone, UB di mana?" dan "UB di mana,
+  Brone?" menjawab; nama di tengah kalimat tidak. "BRONE FILKOM" adalah nama proyek, bukan panggilan.
 - **"Ya?" hanya sekali** per penantian. Ucapan tidak jelas saat menunggu juga hanya diminta diulang
   sekali per giliran, supaya derau tidak membuat robot terus bicara.
 - **Riwayat dibersihkan** setiap kali nama disebut di luar penantian.

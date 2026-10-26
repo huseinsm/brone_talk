@@ -55,9 +55,9 @@ Status per 26 Okt malam: T2, T4, T5 **sudah diperbaiki dan live**. T1 dicoba, te
 | T3 | Bron bisa mendengar audio dari speakernya sendiri (bangun/menjawab dari suara speaker) | sedang | ikut teratasi oleh echo-cancel T1 |
 | T4 | Jendela masih 1 pertanyaan/8 s; diminta 1 menit percakapan + "halo brone" ulang = "Ya?" lagi; "Udah, BRONE." keliru dianggap panggilan | sedang | **diperbaiki:** jendela 60 s (`BRONE_KWS_WINDOW_SECONDS=60`), KWS ikut mendengar saat merekam di jendela, teks "…BRONE" tanpa "halo" tidak lagi memicu "Ya?" |
 | T5 | Ucapan bisa ~16 s walau batasnya 8 s (sisa jendela ikut ditambahkan) | rendah | **diperbaiki:** batas dihitung sejak ucapan mulai |
-| T6 | Suara D21 dan `lexnorm.py` live tetapi belum di-commit; 2 commit belum di-push; `models` symlink ke folder lama | sedang | commit, push, pindahkan model |
-| T7 | Dokumen lama (architecture/decisions) belum memuat mode wake word dan berisi aturan yang sudah diganti | rendah | perbarui |
-| T8 | FAQ wisuda kedaluwarsa (11 Okt), sehingga semua pertanyaan wisuda ditolak | rendah | jadwal pembaruan KB |
+| T6 | Suara D21, `lexnorm.py`, dan 2 commit lokal sudah masuk PR #1; tersisa `models` symlink ke folder lama | rendah | pindahkan model |
+| T7 | ~~Dokumen lama belum memuat mode wake word~~ architecture/decisions diperbarui 26 Okt | - | selesai |
+| T8 | ~~FAQ wisuda kedaluwarsa~~ diperbarui ke periode VII-VIII; log kini memperingatkan data KB basi | rendah | `make kb-check` tiap minggu |
 
 **Urutan kerja berikutnya:** T1 (opsi perangkat keras/latih ulang) → T6 → T7/T8. Setelah itu, ukur alarm palsu
 KWS di lab dan recall penutur lain. Detail bukti, angka, dan penyebab ada di

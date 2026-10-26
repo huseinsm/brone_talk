@@ -239,7 +239,7 @@ FAQ wisuda kedaluwarsa sejak 11 Okt, sehingga semua pertanyaan wisuda ditolak. D
 | 1 | Interupsi: speaker dijauhkan/dikecilkan, latih ulang KWS dengan gema, atau tombol (referensi AEC XVF3800 sudah dicoba, gagal) | T1, T3 | sedang–besar |
 | 2 | ~~Tenggat total MAI~~ **selesai 26 Okt malam** (`_mai_within_deadline`) | T2 | kecil |
 | 3 | ~~Jendela percakapan 60 s + KWS di jendela + CONFIRM hanya "halo bron"~~ **selesai 26 Okt malam** | T4 | sedang |
-| 4 | Commit/push perubahan suara D21 + 2 commit lokal; perbaiki E501 | T6 | kecil |
+| 4 | ~~Commit/push perubahan suara D21 + 2 commit lokal; perbaiki E501~~ **PR #1, 26 Okt** | T6 | kecil |
 | 5 | ~~Batasi ucapan sejak ucapan mulai~~ **selesai 26 Okt malam** (`Endpointer.speech_limit`) | T5 | kecil |
-| 6 | Perbarui README/architecture/decisions; jadwal pembaruan KB | T7, T8 | kecil |
+| 6 | ~~Perbarui README/architecture/decisions; jadwal pembaruan KB~~ **selesai 26 Okt** (peringatan KB basi, `make kb-check`, FAQ wisuda VII-VIII) | T7, T8 | kecil |
 | 7 | Ukur alarm palsu KWS di lab + rekam penutur lain; latih ulang bila perlu | T9, T1 | besar |
