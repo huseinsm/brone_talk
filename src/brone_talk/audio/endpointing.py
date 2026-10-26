@@ -54,12 +54,13 @@ class Utterance:
 
 class Endpointer:
     def __init__(self, vad: VadModel, telemetry: Telemetry, threshold: float,
-                 silence_limit: int, window_limit: int) -> None:
+                 silence_limit: int, window_limit: int, start_limit: int = 0) -> None:
         self.vad = vad
         self.telemetry = telemetry
         self.threshold = threshold
         self.silence_limit = silence_limit
         self.window_limit = window_limit
+        self.start_limit = start_limit  # > 0: menyerah bila ucapan belum mulai setelah sekian jendela
 
     def run(self, source: Iterable[np.ndarray]) -> Utterance:
         """Konsumsi jendela dari source sampai ucapan selesai atau batas jendela tercapai."""
@@ -95,7 +96,7 @@ class Endpointer:
                             break
                     else:
                         silent_windows = 0
-                if ticks >= self.window_limit:
+                if ticks >= self.window_limit or (not speaking and ticks >= self.start_limit > 0):
                     break
         finally:
             close = getattr(source, "close", None)

@@ -29,6 +29,30 @@ tidak dipanggil (`BRONE_LOCK=0`, default kini nonaktif).
   dijawab tanpa nama, dalam jendela `BRONE_AWAIT_SECONDS` (15 detik). Setelah itu harus menyebut
   "Brone" lagi.
 
+## Wake word "halo brone" (KWS, disepakati 23 Okt 2026)
+
+Aktif bila `BRONE_KWS_MODEL` diisi path model openWakeWord (`halo_brone.onnx`, dilatih di
+AI-Center 25 Okt 2026). Kosong = mode lama (nama disebut di teks STT).
+
+- **Bangun hanya lewat model KWS**, tidak lewat teks. STT (MAI/whisper) baru jalan setelah bangun,
+  jadi biaya MAI turun dan obrolan sekitar tidak pernah ditranskripsi.
+- **Satu pertanyaan per bangun.** Alur: tidur -> "halo brone" -> tunggu jeda bicara -> "Ya?" ->
+  satu pertanyaan dalam `BRONE_KWS_WINDOW_SECONDS` (8 s, tanpa menyebut nama) -> jawab -> tidur.
+  Ucapan sebelum "Ya?" dibuang (tidak ada "halo brone, <pertanyaan>" sekali napas). Tidak bicara
+  dalam jendela = tidur lagi tanpa suara.
+- **"halo brone" juga interupsi** (`BRONE_KWS_INTERRUPT`, menggantikan rencana "Brone stop"):
+  selama berpikir/berbicara, pemantau KWS di thread lain menghentikan TTS dan berhenti menunggu
+  LLM, lalu langsung "Ya?". Thread mesin jawaban tidak dibunuh; hasilnya dibuang dan panggilan
+  mesin berikutnya menunggu thread itu selesai.
+- **Penjaga suara sendiri:** deteksi diabaikan bila kalimat yang sedang diucapkan Bron memuat
+  "halo ... bron". Persona tidak dilarang mengucapkannya (pengguna menilai kecil kemungkinannya).
+- **Tanya-balik tetap tanpa wake word:** tanggapan atas pertanyaan balik Bron diterima dalam
+  `BRONE_SOCIAL_AWAIT_SECONDS`.
+- **Pemantau membuka mic sendiri** (arecord kedua lewat PipeWire), bukan berbagi aliran dengan
+  perekam. Lebih sederhana, dan PipeWire mengizinkan beberapa klien rekam pada node yang sama.
+- **openwakeword dipasang `--no-deps`:** paketnya menuntut tflite-runtime di Linux yang tidak
+  punya wheel py3.12. BRONE hanya memakai ONNX.
+
 ## STT
 
 - **MAI-Transcribe-2 utama, whisper cadangan.** Whisper dimuat sejak awal dan dipakai saat internet

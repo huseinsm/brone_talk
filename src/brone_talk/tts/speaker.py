@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import subprocess
+import threading
 import time
 import uuid
 import wave
@@ -41,6 +42,8 @@ class Speaker:
         self.voice_config = cfg.voice_config
         if not self.piper_bin.is_file():
             raise RuntimeError(f"Piper CLI tidak ditemukan: {self.piper_bin}")
+        self.current_text = ""  # kalimat yang sedang diucapkan (penjaga wake word dari suara sendiri)
+        self.cancelled = threading.Event()  # diset oleh interupsi "halo brone": playback dihentikan
         self.sample_rate = 22_050  # id_ID-news_tts-medium.onnx.json -> audio.sample_rate
         sd.check_output_settings(device=self.output_device, samplerate=self.sample_rate, channels=1, dtype="float32")
 
@@ -85,16 +88,26 @@ class Speaker:
             data = data.astype(np.float32) / np.iinfo(data.dtype).max
         else:
             data = data.astype(np.float32)
+        if self.cancelled.is_set():
+            return
         sd.play(data, sample_rate, device=self.output_device, blocking=True)
 
+    def stop(self) -> None:
+        """Hentikan ucapan yang sedang/akan diputar (dipanggil dari thread pemantau interupsi)."""
+        self.cancelled.set()
+        sd.stop()
+
     def say(self, text: str, expression: str) -> bool:
+        if self.cancelled.is_set():  # jawaban sudah diinterupsi: jangan sintesis lagi
+            return False
         self.telemetry.stage("tts", "start")
         path: Path | None = None
         try:
+            self.current_text = text
             path, synth_ms, duration_s = self.synthesize(text)
             self.telemetry.expression("speaking", duration_s)
             played = False
-            if self.playback_enabled:
+            if self.playback_enabled and not self.cancelled.is_set():
                 self.play(path)
                 played = True
             self.telemetry.stage(
@@ -111,6 +124,7 @@ class Speaker:
             LOG.exception("TTS atau playback gagal")
             return False
         finally:
+            self.current_text = ""
             if path is not None:
                 path.unlink(missing_ok=True)
             self.telemetry.expression(expression)

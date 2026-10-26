@@ -69,6 +69,11 @@ class AudioConfig:
     noise_reduce: bool = False  # BRONE_NOISE_REDUCE
     noise_prop_decrease: float = 0.9  # BRONE_NOISE_PROP_DECREASE
     noise_stationary: bool = False  # BRONE_NOISE_STATIONARY
+    # Wake word "halo brone" (openWakeWord). Kosong = mode lama: nama disebut di teks STT.
+    kws_model: str = ""  # BRONE_KWS_MODEL: path halo_brone.onnx
+    kws_threshold: float = 0.5  # BRONE_KWS_THRESHOLD
+    kws_window_s: float = 8.0  # BRONE_KWS_WINDOW_SECONDS: jendela satu pertanyaan setelah "Ya?"
+    kws_interrupt: bool = True  # BRONE_KWS_INTERRUPT: "halo brone" menghentikan jawaban
 
 
 
@@ -191,6 +196,10 @@ class Settings:
             noise_reduce=_flag(env, "BRONE_NOISE_REDUCE", a.noise_reduce),
             noise_prop_decrease=_float(env, "BRONE_NOISE_PROP_DECREASE", a.noise_prop_decrease),
             noise_stationary=_flag(env, "BRONE_NOISE_STATIONARY", a.noise_stationary),
+            kws_model=_str(env, "BRONE_KWS_MODEL", a.kws_model),
+            kws_threshold=_float(env, "BRONE_KWS_THRESHOLD", a.kws_threshold),
+            kws_window_s=_float(env, "BRONE_KWS_WINDOW_SECONDS", a.kws_window_s),
+            kws_interrupt=_flag(env, "BRONE_KWS_INTERRUPT", a.kws_interrupt),
         )
         stt = SttConfig(
             backend=_str(env, "BRONE_STT_BACKEND", s.backend).lower(),

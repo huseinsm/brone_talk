@@ -3,11 +3,18 @@
 Urutan per ucapan:
   rekam -> STT -> panggilan (nama di awal/akhir) -> filter sampah -> keputusan (session.decide)
   -> jawaban jam (tanpa LLM) atau mesin jawaban -> TTS.
+
+Mode wake word (BRONE_KWS_MODEL diisi, desain 23 Okt 2026):
+  tidur -> model KWS mendengar "halo brone" -> tunggu jeda -> "Ya?" -> SATU pertanyaan dalam
+  BRONE_KWS_WINDOW_SECONDS (tanpa harus menyebut nama) -> jawab -> tidur. STT hanya jalan setelah
+  bangun. Selama Bron berpikir/berbicara, "halo brone" lagi = interupsi: jawaban dibatalkan, "Ya?".
+  Tanggapan atas tanya-balik Bron tetap diterima tanpa wake word (Session.social).
 """
 
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from pathlib import Path
 from threading import Event
@@ -15,6 +22,7 @@ from typing import Any
 
 from brone_talk import messages
 from brone_talk.audio.capture import Recorder
+from brone_talk.audio.kws import InterruptMonitor, WakeWord
 from brone_talk.audio.vad import SileroVad
 from brone_talk.config import Settings
 from brone_talk.engine.answer import AnswerEngine, EngineConfig
@@ -30,6 +38,10 @@ LOG = logging.getLogger("brone-talk")
 ENGINE_LABEL = "faq+rag"
 # rute yang tidak diucapkan untuk tanggapan di jendela tanya-balik (biasanya obrolan tim)
 _SILENT_ON_REPLY = ("tolak", "tidak_dimengerti", "gagal", "gerakan")
+
+
+class Interrupted(Exception):
+    """Jawaban dibatalkan oleh "halo brone" di tengah berpikir/berbicara."""
 
 
 def engine_config(settings: Settings, runtime_dir: Path) -> EngineConfig:
@@ -79,6 +91,13 @@ class TalkService:
         self.speaker = Speaker(settings.tts, settings.audio, self.telemetry, self.runtime_dir)
         self.engine = AnswerEngine(engine_config(settings, self.runtime_dir))
         self.session = Session()
+        a = settings.audio
+        self.kws = WakeWord(Path(a.kws_model), a.kws_threshold) if a.kws_model else None
+        # pemantau interupsi berjalan di thread lain, jadi memakai instance model sendiri
+        self.kws_interrupt = WakeWord(Path(a.kws_model), a.kws_threshold) if a.kws_model and a.kws_interrupt else None
+        self._woken = False  # interupsi barusan: langsung "Ya?" tanpa menunggu wake word lagi
+        self._interrupt: threading.Event | None = None  # diset pemantau saat jawaban sedang berjalan
+        self._answer_thread: threading.Thread | None = None
 
     def _check_assets(self) -> None:
         required = [
@@ -86,6 +105,8 @@ class TalkService:
             self.settings.tts.voice_model,
             self.settings.tts.voice_config,
         ]
+        if self.settings.audio.kws_model:
+            required.append(Path(self.settings.audio.kws_model))
         missing = [str(p) for p in required if not Path(p).is_file()]
         if missing:
             raise RuntimeError(f"Aset model wajib belum ada: {', '.join(missing)}")
@@ -93,13 +114,46 @@ class TalkService:
     # -- jawaban (pembungkus mesin jawaban yang juga mengirim telemetri LLM) --------
     def _answer(self, text: str, replying_to: str = "") -> dict[str, Any]:
         self.telemetry.stage("llm", "start", model=ENGINE_LABEL, backend="v4")
-        result = self.engine.answer(text, self.transcriber.last_stats, replying_to=replying_to)
+        result = self._cancellable(lambda: self.engine.answer(text, self.transcriber.last_stats,
+                                                              replying_to=replying_to))
         meta = result.get("meta", {})
         self.telemetry.stage("llm", "done", ms=meta.get("total_ms"), route=result.get("route"),
                              backend=(meta.get("llm") or {}).get("backend", ""), model=ENGINE_LABEL)
         return result
 
+    def _cancellable(self, call):
+        """Jalankan call; dengan pemantau interupsi aktif, berhenti menunggu (Interrupted) saat "halo brone".
+
+        Thread mesin jawaban tidak bisa dibunuh: ia selesai di latar dan hasilnya dibuang.
+        Panggilan mesin berikutnya menunggu thread itu selesai dulu (_join_answer).
+        """
+        self._join_answer()
+        if self._interrupt is None:
+            return call()
+        box: dict[str, Any] = {}
+
+        def run() -> None:
+            try:
+                box["result"] = call()
+            except BaseException as exc:  # noqa: BLE001 - diteruskan ke thread utama
+                box["error"] = exc
+
+        self._answer_thread = threading.Thread(target=run, name="answer", daemon=True)
+        self._answer_thread.start()
+        while self._answer_thread.is_alive():
+            if self._interrupt.wait(0.05):
+                raise Interrupted()
+        if "error" in box:
+            raise box["error"]
+        return box["result"]
+
+    def _join_answer(self) -> None:
+        if self._answer_thread is not None and self._answer_thread.is_alive():
+            LOG.info("Menunggu jawaban yang diinterupsi selesai di latar")
+            self._answer_thread.join(timeout=self.settings.engine.local_timeout_s + 5)
+
     def _clear_conversation(self) -> None:
+        self._join_answer()
         self.engine.reset()
 
     def _expire_await(self, now: float | None = None) -> None:
@@ -137,7 +191,7 @@ class TalkService:
     # -- loop utama ----------------------------------------------------------------
     def run(self) -> None:
         self.warmup()
-        LOG.info("BRONE talk siap, menunggu kata 'Brone'")
+        LOG.info("BRONE talk siap, menunggu %s", "'halo brone' (KWS)" if self.kws else "kata 'Brone'")
         while not self.stop_event.is_set():
             self.turn()
         self.telemetry.stage("idle", "stopped")
@@ -147,6 +201,9 @@ class TalkService:
 
     def turn(self) -> None:
         """Satu giliran: satu ucapan dari mic sampai jawaban diucapkan (atau diabaikan)."""
+        if self.kws is not None:
+            self._turn_kws()
+            return
         heard = self._hear()
         if heard is None:
             return
@@ -169,10 +226,70 @@ class TalkService:
         else:
             self._reply(outcome, text)
 
+    def _turn_kws(self) -> None:
+        """Mode wake word: tidur -> "halo brone" -> "Ya?" -> satu pertanyaan -> jawab -> tidur."""
+        session = self.session
+        if not session.awaiting_question:
+            if not self._woken and not self.recorder.wait_for_wake(self.kws):
+                return
+            self._woken = False
+            self._wake_confirm(reason="wake_word")
+        heard = self._hear(start_s=self._remaining_window())
+        if heard is None:
+            return
+        text, called = heard
+        outcome = decide(text, called=called, awaiting=True)
+        if outcome.decision is Decision.STOP:
+            self.speaker.say(messages.SAY_STOP, "neutral")
+            session.end_wait()
+            self.telemetry.stage("idle", "standby", reason="voice_stop")
+            return
+        if outcome.decision is Decision.CONFIRM:  # "halo brone" lagi di jendela pertanyaan
+            self._wake_confirm(reason="wake_text")
+            return
+        if not session.social:
+            self._clear_conversation()
+        self._reply_interruptible(outcome, text)
+
+    def _wake_confirm(self, reason: str) -> None:
+        self._clear_conversation()
+        self.speaker.say(messages.SAY_CONFIRM, "happy")
+        self.session.start_wait(self.settings.audio.kws_window_s)
+        self.telemetry.stage("idle", "awaiting_question", reason=reason)
+
+    def _remaining_window(self) -> float:
+        s = self.session
+        window = s.await_window or self.settings.audio.kws_window_s
+        return max(0.5, window - (time.monotonic() - s.awaiting_since))
+
+    def _reply_interruptible(self, outcome: Outcome, text: str) -> None:
+        """_reply dengan pemantau "halo brone": interupsi menghentikan LLM/TTS lalu langsung "Ya?"."""
+        if self.kws_interrupt is None:
+            self._reply(outcome, text)
+            return
+        self.speaker.cancelled.clear()
+        monitor = InterruptMonitor(self.kws_interrupt, self.recorder.stream, self.speaker.stop,
+                                   lambda: self.speaker.current_text)
+        self._interrupt = monitor.fired
+        try:
+            with monitor:
+                try:
+                    self._reply(outcome, text)
+                except Interrupted:
+                    pass
+        finally:
+            self._interrupt = None
+            self.speaker.cancelled.clear()
+        if monitor.fired.is_set():
+            self.session.end_wait()
+            self.telemetry.stage("idle", "interrupted")
+            self.recorder.wait_silence()
+            self._woken = True
+
     # -- dengar: rekam -> STT -> panggilan -> filter sampah ---------------------------
-    def _hear(self) -> tuple[str, bool] | None:
+    def _hear(self, start_s: float = 0.0) -> tuple[str, bool] | None:
         """(teks, dipanggil) dari satu ucapan, atau None bila tidak ada yang perlu diputuskan."""
-        text = self._record_and_transcribe()
+        text = self._record_and_transcribe(start_s)
         if not text:
             return None
         if NAME_RE.search(text):
@@ -188,6 +305,7 @@ class TalkService:
             # sedang menunggu pertanyaan dan ucapannya tidak jelas: minta diulang, sekali per penantian
             if len(stt_tokens(text)) >= 3 and self.session.should_say_unclear():
                 self.speaker.say(messages.MSG_UNCLEAR_AUDIO, "confused")
+                self.session.awaiting_since = time.monotonic()  # jendela dihitung ulang setelah minta diulang
             return None
         cleaned = stt_strip_prompt_sentence(text)
         if cleaned == text:
@@ -199,9 +317,9 @@ class TalkService:
         LOG.info("Gema kalimat prompt dibuang: %r -> %r", text[:120], cleaned[:120])
         return self._addressing(cleaned)
 
-    def _record_and_transcribe(self) -> str:
+    def _record_and_transcribe(self, start_s: float = 0.0) -> str:
         try:
-            capture = self.recorder.record()
+            capture = self.recorder.record(start_s)
         except Exception as exc:
             self.telemetry.stage("error", "audio", detail=str(exc)[:200])
             LOG.exception("Perekaman gagal")
@@ -257,6 +375,8 @@ class TalkService:
 
         try:
             answer = self._answer(question, replying_to)
+        except Interrupted:
+            raise
         except Exception:
             self.telemetry.status("error", "mesin jawaban tidak tersedia")
             self.speaker.say(messages.SAY_SERVICE_ERROR, "confused")

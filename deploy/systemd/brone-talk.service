@@ -27,6 +27,12 @@ Environment="BRONE_INPUT_PIPEWIRE_NODES=Wireless microphone=brone-mic-wireless,X
 Environment=BRONE_AWAIT_SECONDS=0
 # Bron bertanya balik -> satu tanggapan tanpa nama diterima dalam jendela ini.
 Environment=BRONE_SOCIAL_AWAIT_SECONDS=8
+# 26 Okt 2026: bangun HANYA lewat model wake word "halo brone" (openWakeWord); juga interupsi.
+# Kosongkan BRONE_KWS_MODEL untuk kembali ke mode lama (nama di teks STT).
+Environment=BRONE_KWS_MODEL=%h/brone_talk/models/kws/halo_brone.onnx
+Environment=BRONE_KWS_THRESHOLD=0.5
+Environment=BRONE_KWS_WINDOW_SECONDS=8
+Environment=BRONE_KWS_INTERRUPT=1
 Environment=BRONE_OUTPUT_DEVICE=default
 Environment=BRONE_PLAYBACK=1
 Environment=BRONE_MAX_UTTERANCE_SECONDS=8
