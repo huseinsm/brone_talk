@@ -32,8 +32,10 @@ dan `BRONE_DOA_*` sudah dihapus (commit `82b0efe`, 20 Okt 2026).
 
 ## Wake word "halo brone" (KWS, disepakati 23 Okt 2026)
 
-Aktif bila `BRONE_KWS_MODEL` diisi path model openWakeWord (`halo_brone.onnx`, dilatih di
-AI-Center 25 Okt 2026). Kosong = mode lama (nama disebut di teks STT).
+**Default sejak 26 Okt 2026**: `BRONE_KWS_MODEL` bawaan `models/kws/halo_brone.onnx` (openWakeWord,
+dilatih di AI-Center 25 Okt 2026), jadi wake word, jendela 60 s, dan interupsi aktif tanpa env.
+Isi kosong (`BRONE_KWS_MODEL=`) = mode lama (nama disebut di teks STT). Model tidak ada di git
+(`models` di-gitignore); service menolak start bila file model tidak ada.
 
 - **Bangun hanya lewat model KWS**, tidak lewat teks. STT (MAI/whisper) baru jalan setelah bangun,
   jadi biaya MAI turun dan obrolan sekitar tidak pernah ditranskripsi.

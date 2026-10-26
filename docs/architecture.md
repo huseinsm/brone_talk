@@ -64,7 +64,7 @@ Tidak ada cache semantik: jawaban LLM tidak disimpan untuk dipakai ulang.
 
 ## Status state
 
-Mode wake word (produksi, `BRONE_KWS_MODEL` diisi; `app.py _turn_kws`):
+Mode wake word (default; `app.py _turn_kws`):
 
 ```
 TIDUR   --(KWS: "halo brone")----------> tunggu jeda -> "Ya?" -> JENDELA (60 s)

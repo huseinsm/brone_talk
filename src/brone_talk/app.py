@@ -4,7 +4,7 @@ Urutan per ucapan:
   rekam -> STT -> panggilan (nama di awal/akhir) -> filter sampah -> keputusan (session.decide)
   -> jawaban jam (tanpa LLM) atau mesin jawaban -> TTS.
 
-Mode wake word (BRONE_KWS_MODEL diisi, desain 23 Okt 2026, jendela percakapan 26 Okt 2026):
+Mode wake word (default; BRONE_KWS_MODEL kosong = mode teks; desain 23 Okt, jendela 26 Okt 2026):
   tidur -> model KWS mendengar "halo brone" -> tunggu jeda -> "Ya?" -> jendela percakapan
   BRONE_KWS_WINDOW_SECONDS (60 s) sejak "Ya?": SEMUA pertanyaan di dalamnya dijawab tanpa menyebut
   nama -> jendela habis -> tidur. "halo brone" di dalam jendela = "Ya?" lagi dan jendela dimulai ulang.

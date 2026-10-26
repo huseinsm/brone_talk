@@ -69,8 +69,9 @@ class AudioConfig:
     noise_reduce: bool = False  # BRONE_NOISE_REDUCE
     noise_prop_decrease: float = 0.9  # BRONE_NOISE_PROP_DECREASE
     noise_stationary: bool = False  # BRONE_NOISE_STATIONARY
-    # Wake word "halo brone" (openWakeWord). Kosong = mode lama: nama disebut di teks STT.
-    kws_model: str = ""  # BRONE_KWS_MODEL: path halo_brone.onnx
+    # Wake word "halo brone" (openWakeWord) = default sejak 26 Okt 2026: bangun, jendela 60 s, interupsi.
+    # BRONE_KWS_MODEL kosong = mode lama (nama disebut di teks STT).
+    kws_model: str = str(ROOT / "models" / "kws" / "halo_brone.onnx")  # BRONE_KWS_MODEL: kosong = mode teks
     kws_threshold: float = 0.5  # BRONE_KWS_THRESHOLD
     kws_window_s: float = 60.0  # BRONE_KWS_WINDOW_SECONDS: jendela percakapan tanpa wake word sejak "Ya?"
     kws_interrupt: bool = True  # BRONE_KWS_INTERRUPT: "halo brone" menghentikan jawaban
